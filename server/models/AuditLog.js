@@ -4,11 +4,11 @@ const auditLogSchema = new mongoose.Schema({
     actor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        default: null  // null for unauthenticated requests
+        default: null
     },
     method: {
         type: String,
-        required: true  // GET, POST, PATCH, DELETE
+        required: true
     },
     route: {
         type: String,
@@ -26,7 +26,6 @@ const auditLogSchema = new mongoose.Schema({
     }
 }, { timestamps: false })
 
-// auto-delete audit logs after 90 days
 auditLogSchema.index(
     { ts: 1 },
     { expireAfterSeconds: 60 * 60 * 24 * 90 }

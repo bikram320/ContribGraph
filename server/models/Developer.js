@@ -7,7 +7,7 @@ const skillSchema = new mongoose.Schema({
         enum: ['beginner', 'intermediate', 'advanced'],
         default: 'intermediate'
     },
-    inferredFrom: [String]  // repo names that contributed this tag
+    inferredFrom: [String]
 }, { _id: false })
 
 const developerSchema = new mongoose.Schema({
@@ -40,7 +40,7 @@ const developerSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-// compound index for recruiter search
+
 developerSchema.index({ 'skills.tag': 1, score: -1 })
 
 export default mongoose.model('Developer', developerSchema)

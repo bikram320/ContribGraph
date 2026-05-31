@@ -27,10 +27,9 @@ const snapshotSchema = new mongoose.Schema({
     }
 }, { timestamps: false })
 
-// keep only last 30 snapshots per developer — old ones auto-delete
 snapshotSchema.index(
     { computedAt: 1 },
-    { expireAfterSeconds: 60 * 60 * 24 * 90 } // 90 days TTL
+    { expireAfterSeconds: 60 * 60 * 24 * 90 }
 )
 
 snapshotSchema.index({ devId: 1, computedAt: -1 })

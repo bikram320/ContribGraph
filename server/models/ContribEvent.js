@@ -4,7 +4,7 @@ const contribEventSchema = new mongoose.Schema({
     githubEventId: {
         type: String,
         required: true,
-        unique: true  // prevents duplicate ingestion
+        unique: true
     },
     devId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -30,7 +30,7 @@ const contribEventSchema = new mongoose.Schema({
     },
     weight: {
         type: Number,
-        required: true  // stored at ingest time, not recomputed
+        required: true
     },
     occurredAt: {
         type: Date,
@@ -38,7 +38,6 @@ const contribEventSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-// index for fast per-developer event queries sorted by date
 contribEventSchema.index({ devId: 1, occurredAt: -1 })
 
 export default mongoose.model('ContribEvent', contribEventSchema)
