@@ -20,7 +20,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['developer', 'recruiter', 'admin'],
         default: 'developer'
-    }
+    },
+    savedDevelopers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Developer'
+    }]
 }, { timestamps: true })
 
 export default mongoose.model('User', userSchema)
