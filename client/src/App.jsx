@@ -3,10 +3,13 @@ import { useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import Landing from './pages/Landing.jsx'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Profile from './pages/Profile.jsx'
 import Search from './pages/Search.jsx'
+import Leaderboard from './pages/Leaderboard.jsx'
+import Settings from './pages/Settings.jsx'
 import useAuth from './hooks/useAuth.js'
 
 const App = () => {
@@ -33,6 +36,7 @@ const App = () => {
         />
         <Navbar />
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={
             <ProtectedRoute><Dashboard /></ProtectedRoute>
@@ -43,7 +47,10 @@ const App = () => {
               <Search />
             </ProtectedRoute>
           } />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/settings" element={
+            <ProtectedRoute><Settings /></ProtectedRoute>
+          } />
         </Routes>
       </BrowserRouter>
   )

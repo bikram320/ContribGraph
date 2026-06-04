@@ -1,24 +1,36 @@
 import { useEffect, useState } from 'react'
 import useAuthStore from '../store/authStore.js'
 import useDeveloperStore from '../store/developerStore.js'
-import { getMyProfile } from '../api/developer.api.js'
+import { getMyProfile, getMyEvents } from '../api/developer.api.js'
 import ScoreCard from '../components/ScoreCard.jsx'
 import ActivityChart from '../components/ActivityChart.jsx'
 
 const Dashboard = () => {
     const { user, developer, updateScore } = useAuthStore()
-    const { setProfile, setSyncing, isSyncing, updateAfterSync } = useDeveloperStore()
+    const { setProfile, setSyncing, isSyncing, updateAfterSync, events, setEvents } = useDeveloperStore()
     const [syncResult, setSyncResult] = useState(null)
     const [accessToken, setAccessToken] = useState('')
     const [showTokenInput, setShowTokenInput] = useState(false)
+    const [loadingEvents, setLoadingEvents] = useState(false)
 
     useEffect(() => {
         const fetch = async () => {
             try {
                 const res = await getMyProfile()
                 setProfile(res.data.developer)
+
+                // Also fetch events for activity chart
+                try {
+                    setLoadingEvents(true)
+                    const eventsRes = await getMyEvents()
+                    setEvents(eventsRes.data.events || [])
+                } catch (err) {
+                    console.error('Failed to fetch events:', err)
+                }
             } catch (err) {
                 console.error(err)
+            } finally {
+                setLoadingEvents(false)
             }
         }
         fetch()
@@ -39,6 +51,14 @@ const Dashboard = () => {
             updateScore(score)
             setSyncResult({ score, ingestion })
             setShowTokenInput(false)
+
+            // Refresh events after sync
+            try {
+                const eventsRes = await getMyEvents()
+                setEvents(eventsRes.data.events || [])
+            } catch (err) {
+                console.error('Failed to fetch events:', err)
+            }
         } catch (err) {
             console.error('Sync failed:', err)
         } finally {
@@ -198,10 +218,17 @@ const Dashboard = () => {
                                 fontSize: 12,
                                 color: 'var(--text-secondary)'
                             }}>
-                {skill.tag}
-              </span>
+                 {skill.tag}
+               </span>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {/* Activity Chart */}
+            {events && events.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                    <ActivityChart events={events} />
                 </div>
             )}
 
