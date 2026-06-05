@@ -178,7 +178,7 @@ const Landing = () => {
                         </div>
 
                         <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span>🔒</span> Read-only access · No private data · No writing to your GitHub
+                            <span></span> Read-only access · No private data · No writing to your GitHub
                         </p>
                     </div>
 

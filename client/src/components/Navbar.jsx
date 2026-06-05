@@ -129,16 +129,90 @@ const Navbar = () => {
                 transition: 'all 0.25s ease'
             }}>
 
-                {/* Logo */}
-                <Link to="/" onClick={handleLogoClick} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                    <span style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: 20,
-                        color: 'var(--text-primary)',
-                        letterSpacing: '-0.01em'
-                    }}>
-                        Contrib<em style={{ color: 'var(--accent-text)', fontStyle: 'italic' }}>Graph</em>
-                    </span>
+
+                {/* Logo Wrapper */}
+                <Link
+                    to="/"
+                    onClick={(e) => {
+                        // Prevent default route change if already on the landing view
+                        if (window.location.pathname === '/') {
+                            e.preventDefault();
+                        }
+                        // Smoothly scroll to the absolute top of the viewport
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }}
+                    style={{
+                        textDecoration: 'none',
+                        flexShrink: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        cursor: 'pointer',
+                        zIndex: 10000,
+                        position: 'relative'
+                    }}
+                >
+                    <svg width="38" height="38" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
+                        <rect width="100" height="100" rx="22" fill="#112926" stroke="#1e4d46" strokeWidth="1.5" />
+                        <g opacity="0.85">
+                            <rect x="18" y="18" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="36" y="18" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="54" y="18" width="12" height="12" rx="2.5" fill="#0d9488" opacity="0.4" />
+                            <rect x="70" y="18" width="12" height="12" rx="2.5" fill="#2dd4bf" />
+                            <rect x="18" y="36" width="12" height="12" rx="2.5" fill="#0d9488" opacity="0.6" />
+                            <rect x="36" y="36" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="54" y="36" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="70" y="36" width="12" height="12" rx="2.5" fill="#0d9488" opacity="0.3" />
+                            <rect x="18" y="54" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="36" y="54" width="12" height="12" rx="2.5" fill="#2dd4bf" />
+                            <rect x="54" y="54" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="70" y="54" width="12" height="12" rx="2.5" fill="#0d9488" opacity="0.7" />
+                            <rect x="18" y="70" width="12" height="12" rx="2.5" fill="#0d9488" opacity="0.5" />
+                            <rect x="36" y="70" width="12" height="12" rx="2.5" fill="#14322e" />
+                            <rect x="54" y="70" width="12" height="12" rx="2.5" fill="#2dd4bf" />
+                            <rect x="70" y="70" width="12" height="12" rx="2.5" fill="#14322e" />
+                        </g>
+                        <path d="M55 15L28 53H47L40 85L72 41H50L55 15Z" fill="#2dd4bf" stroke="#112926" strokeWidth="3" strokeLinejoin="round" />
+                    </svg>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', height: '24px' }}>
+                            <span style={{
+                                fontFamily: '"Playfair Display", "Clarendon", "Georgia", serif',
+                                fontSize: "23px",
+                                fontWeight: "700",
+                                color: "var(--text-primary)",
+                                letterSpacing: "-0.03em"
+                            }}>
+                                Contrib
+                            </span>
+                            <span style={{
+                                fontFamily: 'var(--font-display), "Inter", "Sans-Serif"',
+                                fontSize: "23px",
+                                color: "#2dd4bf",
+                                fontWeight: "400",
+                                letterSpacing: "-0.01em",
+                                marginLeft: "2px"
+                            }}>
+                                Graph
+                            </span>
+                        </div>
+
+                        <span style={{
+                            fontSize: '8px',
+                            fontWeight: '700',
+                            color: 'var(--text-secondary)',
+                            letterSpacing: '0.08em',
+                            marginTop: '6px',
+                            textTransform: 'uppercase',
+                            fontFamily: 'var(--font-sans), sans-serif'
+                        }}>
+                            Github Reputation Platform
+                        </span>
+                    </div>
                 </Link>
 
                 {/* Desktop center nav links */}
