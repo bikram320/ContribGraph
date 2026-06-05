@@ -11,11 +11,9 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // clear local state and redirect to login
+            // clear local state — logout is already handled
+            // in useAuth.js fetchMe() function
             localStorage.removeItem('contribgraph-auth')
-            if (window.location.pathname !== '/login') {
-                window.location.href = '/login'
-            }
         }
         return Promise.reject(error)
     }

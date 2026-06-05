@@ -8,8 +8,8 @@ import Dashboard from './pages/Dashboard.jsx'
 import Profile from './pages/Profile.jsx'
 import Search from './pages/Search.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
+import Settings from './pages/Settings.jsx'
 import useAuth from './hooks/useAuth.js'
-import Login from './pages/Login.jsx'
 import useAuthStore from './store/authStore.js'
 
 const App = () => {
@@ -17,6 +17,9 @@ const App = () => {
     const { isAuthenticated } = useAuthStore()
 
     useEffect(() => {
+        // on every app load — try to restore session from HttpOnly cookie
+        // if cookie exists and is valid → sets user in store
+        // if not → clears store, user stays on landing
         fetchMe()
     }, [])
 
@@ -37,26 +40,58 @@ const App = () => {
             />
             <Navbar />
             <Routes>
-                {/* public */}
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
+
+                {/* ── Public routes — no auth needed ───────────────── */}
+                <Route
+                    path="/"
+                    element={
+                        // if already logged in, skip landing → go straight to dashboard
+                        isAuthenticated
+                            ? <Navigate to="/dashboard" replace />
+                            : <Landing />
+                    }
+                />
+
+                {/* OAuth callback landing point
+            GitHub redirects to /dashboard after callback
+            fetchMe() in useEffect picks up the cookie automatically */}
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
 
-                {/* protected */}
-                <Route path="/dashboard" element={
-                    <ProtectedRoute><Dashboard /></ProtectedRoute>
-                } />
-                <Route path="/search" element={
-                    <ProtectedRoute allowedRoles={['recruiter', 'admin']}>
-                        <Search />
-                    </ProtectedRoute>
-                } />
+                {/* ── Protected routes ──────────────────────────────── */}
+                <Route
+                    path="/settings"
+                    element={
+                        <ProtectedRoute>
+                            <Settings />
+                        </ProtectedRoute>
+                    }
+                />
 
-                {/* fallback */}
-                <Route path="*" element={
-                    <Navigate to={isAuthenticated ? '/dashboard' : '/'} replace />
-                } />
+                <Route
+                    path="/search"
+                    element={
+                        <ProtectedRoute allowedRoles={['recruiter', 'admin']}>
+                            <Search />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* ── Catch all — no login page, just back to home ─── */}
+                <Route
+                    path="*"
+                    element={<Navigate to="/" replace />}
+                />
+
             </Routes>
         </BrowserRouter>
     )
