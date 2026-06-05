@@ -163,3 +163,24 @@ export const removeSavedDeveloper = async (req, res) => {
         res.status(500).json({ message: 'Failed to remove developer.' })
     }
 }
+// ─────────────────────────────────────────────────────
+// GET /api/search/leaderboard
+// PUBLIC — no auth required
+// returns top developers sorted by score
+// ─────────────────────────────────────────────────────
+export const getLeaderboard = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 20
+
+        const developers = await Developer.find({ score: { $gt: 0 } })
+            .populate('userId', 'username avatarUrl')
+            .sort({ score: -1 })
+            .limit(limit)
+            .select('githubUsername skills score availability lastSyncAt userId')
+
+        res.status(200).json({ developers, total: developers.length })
+    } catch (error) {
+        console.error('getLeaderboard error:', error.message)
+        res.status(500).json({ message: 'Failed to fetch leaderboard.' })
+    }
+}

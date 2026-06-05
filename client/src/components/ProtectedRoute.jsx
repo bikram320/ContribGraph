@@ -2,12 +2,23 @@ import { Navigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore.js'
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-    const { isAuthenticated, user, isLoading } = useAuthStore()
+    const { isAuthenticated, isLoading, user } = useAuthStore()
 
+    // fetchMe hasn't resolved yet — render nothing so we don't
+    // flash a redirect before we know the real auth state
     if (isLoading) {
         return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: 13 }}>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh'
+            }}>
+                <div style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--text-muted)',
+                    fontSize: 13
+                }}>
                     loading...
                 </div>
             </div>

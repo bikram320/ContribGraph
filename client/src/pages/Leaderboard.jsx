@@ -1,330 +1,210 @@
 import { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
+import { Link } from 'react-router-dom'
+import api from '../api/axios.js'
+
+const MEDAL = { 0: '🥇', 1: '🥈', 2: '🥉' }
 
 const Leaderboard = () => {
     const [developers, setDevelopers] = useState([])
     const [loading, setLoading] = useState(true)
-    const [timeRange, setTimeRange] = useState('all') // 'week', 'month', 'all'
-    const [skillFilter, setSkillFilter] = useState('')
+    const [filter, setFilter] = useState('all')
 
     useEffect(() => {
-        fetchLeaderboard()
-    }, [timeRange, skillFilter])
-
-    const fetchLeaderboard = async () => {
-        try {
-            setLoading(true)
-            // Mock data - In real app, fetch from /api/developers/leaderboard
-            const mockDevelopers = [
-                {
-                    _id: '1',
-                    githubUsername: 'torvalds',
-                    userId: { username: 'Linus Torvalds', avatarUrl: 'https://avatars.githubusercontent.com/u/1?v=4' },
-                    score: 985.5,
-                    skills: [{ tag: 'C' }, { tag: 'Linux' }, { tag: 'Kernel' }],
-                    availability: 'closed',
-                    lastSyncAt: new Date().toISOString()
-                },
-                {
-                    _id: '2',
-                    githubUsername: 'gvanrossum',
-                    userId: { username: 'Guido van Rossum', avatarUrl: 'https://avatars.githubusercontent.com/u/6?v=4' },
-                    score: 945.2,
-                    skills: [{ tag: 'Python' }, { tag: 'Design' }, { tag: 'Open Source' }],
-                    availability: 'busy',
-                    lastSyncAt: new Date().toISOString()
-                },
-                {
-                    _id: '3',
-                    githubUsername: 'torvalds',
-                    userId: { username: 'React Creator', avatarUrl: 'https://avatars.githubusercontent.com/u/810438?v=4' },
-                    score: 920.8,
-                    skills: [{ tag: 'JavaScript' }, { tag: 'React' }, { tag: 'Web' }],
-                    availability: 'open',
-                    lastSyncAt: new Date().toISOString()
-                }
-            ]
-
-            // Filter by skill if provided
-            if (skillFilter) {
-                setDevelopers(mockDevelopers.filter(dev =>
-                    dev.skills.some(s => s.tag.toLowerCase().includes(skillFilter.toLowerCase()))
-                ))
-            } else {
-                setDevelopers(mockDevelopers)
+        const load = async () => {
+            try {
+                setLoading(true)
+                // uses the public search endpoint — no auth needed
+                // sorted by score descending by default
+                const res = await api.get('/search/developers', {
+                    params: { limit: 20, page: 1 }
+                })
+                setDevelopers(res.data.developers || [])
+            } catch (err) {
+                console.error('Leaderboard fetch failed:', err)
+                setDevelopers([])
+            } finally {
+                setLoading(false)
             }
-        } catch (err) {
-            console.error('Failed to fetch leaderboard:', err)
-            toast.error('Failed to load leaderboard')
-        } finally {
-            setLoading(false)
         }
-    }
+        load()
+    }, [])
+
+    const filtered = filter === 'all'
+        ? developers
+        : developers.filter(d => d.availability === filter)
 
     return (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px' }}>
 
             {/* Header */}
             <div style={{ marginBottom: 32 }}>
-                <h1 style={{ fontSize: 28, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 8 }}>
-                    🏆 Leaderboard
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 8 }}>
+                    Community
+                </p>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 8 }}>
+                    Developer Leaderboard
                 </h1>
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                    Top developers ranked by reputation score
+                    Ranked by time-decayed reputation score. Updated on every sync.
                 </p>
             </div>
 
-            {/* Filters */}
+            {/* Filter tabs */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+                {[
+                    { val: 'all', label: 'All Developers' },
+                    { val: 'open', label: '🟢 Open to Work' },
+                    { val: 'busy', label: '🟡 Busy' }
+                ].map(opt => (
+                    <button key={opt.val} onClick={() => setFilter(opt.val)} style={{
+                        padding: '7px 16px',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        border: `1px solid ${filter === opt.val ? 'var(--accent)' : 'var(--border)'}`,
+                        background: filter === opt.val ? 'var(--accent-dim)' : 'transparent',
+                        color: filter === opt.val ? 'var(--accent-text)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s'
+                    }}>
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Table */}
             <div style={{
-                display: 'flex',
-                gap: 12,
-                marginBottom: 24,
-                flexWrap: 'wrap'
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 14,
+                overflow: 'hidden'
             }}>
-                {/* Time range filter */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                    {['week', 'month', 'all'].map(range => (
-                        <button
-                            key={range}
-                            onClick={() => setTimeRange(range)}
-                            style={{
-                                padding: '8px 16px',
-                                borderRadius: 8,
-                                border: '1px solid var(--border)',
-                                background: timeRange === range ? 'var(--accent)' : 'var(--bg-surface)',
-                                color: timeRange === range ? 'var(--bg-base)' : 'var(--text-secondary)',
-                                fontSize: 12,
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.15s',
-                                textTransform: 'capitalize'
-                            }}
-                        >
-                            {range === 'all' ? 'All Time' : 'This ' + (range === 'week' ? 'Week' : 'Month')}
-                        </button>
+
+                {/* Table header */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '48px 1fr 120px 80px',
+                    padding: '12px 20px',
+                    borderBottom: '1px solid var(--border)',
+                    backgroundColor: 'var(--bg-elevated)'
+                }}>
+                    {['Rank', 'Developer', 'Skills', 'Score'].map(h => (
+                        <span key={h} style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+              {h}
+            </span>
                     ))}
                 </div>
 
-                {/* Skill filter */}
-                <input
-                    type="text"
-                    placeholder="Filter by skill (e.g., React, Python)"
-                    value={skillFilter}
-                    onChange={e => setSkillFilter(e.target.value)}
-                    style={{
-                        padding: '8px 14px',
-                        borderRadius: 8,
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-elevated)',
-                        color: 'var(--text-primary)',
-                        fontSize: 12,
-                        outline: 'none',
-                        flex: 1,
-                        minWidth: 200
-                    }}
-                />
+                {loading ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
+                        loading leaderboard...
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No developers found.</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 6 }}>Be the first — sync your GitHub on the dashboard.</p>
+                    </div>
+                ) : (
+                    filtered.map((dev, i) => (
+                        <Link
+                            key={dev._id}
+                            to={`/profile/${dev.githubUsername}`}
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: '48px 1fr 120px 80px',
+                                padding: '14px 20px',
+                                borderBottom: i < filtered.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                                textDecoration: 'none',
+                                alignItems: 'center',
+                                transition: 'background 0.15s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            {/* Rank */}
+                            <span style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: i < 3 ? 18 : 13,
+                                color: i < 3 ? 'var(--text-primary)' : 'var(--text-muted)',
+                                fontWeight: 600
+                            }}>
+                {MEDAL[i] || `#${i + 1}`}
+              </span>
+
+                            {/* Developer */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                {dev.userId?.avatarUrl && (
+                                    <img
+                                        src={dev.userId.avatarUrl}
+                                        alt={dev.githubUsername}
+                                        style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border)', flexShrink: 0 }}
+                                    />
+                                )}
+                                <div>
+                                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>
+                                        {dev.userId?.username || dev.githubUsername}
+                                    </p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                        backgroundColor: dev.availability === 'open' ? 'var(--green-dim)' : dev.availability === 'busy' ? 'var(--amber-dim)' : 'var(--bg-elevated)',
+                        color: dev.availability === 'open' ? 'var(--green)' : dev.availability === 'busy' ? 'var(--amber)' : 'var(--text-muted)',
+                    }}>
+                      {dev.availability}
+                    </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Skills */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                {dev.skills?.slice(0, 2).map(s => (
+                                    <span key={s.tag} style={{
+                                        padding: '2px 6px',
+                                        borderRadius: 4,
+                                        background: 'var(--bg-elevated)',
+                                        border: '1px solid var(--border)',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontSize: 10,
+                                        color: 'var(--text-muted)'
+                                    }}>
+                    {s.tag}
+                  </span>
+                                ))}
+                                {dev.skills?.length > 2 && (
+                                    <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 4px' }}>
+                    +{dev.skills.length - 2}
+                  </span>
+                                )}
+                            </div>
+
+                            {/* Score */}
+                            <span style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: 16,
+                                fontWeight: 600,
+                                color: i === 0 ? 'var(--accent-text)' : 'var(--text-primary)'
+                            }}>
+                {Number(dev.score).toFixed(1)}
+              </span>
+                        </Link>
+                    ))
+                )}
             </div>
 
-            {/* Leaderboard Table */}
-            {loading ? (
-                <div style={{
-                    padding: '40px',
-                    textAlign: 'center',
-                    color: 'var(--text-muted)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 13
-                }}>
-                    Loading leaderboard...
-                </div>
-            ) : developers.length > 0 ? (
-                <div style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    overflow: 'hidden'
-                }}>
-                    <table style={{
-                        width: '100%',
-                        borderCollapse: 'collapse'
-                    }}>
-                        <thead>
-                            <tr style={{
-                                backgroundColor: 'var(--bg-elevated)',
-                                borderBottom: '1px solid var(--border)'
-                            }}>
-                                <th style={{
-                                    padding: '14px 20px',
-                                    textAlign: 'left',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    Rank
-                                </th>
-                                <th style={{
-                                    padding: '14px 20px',
-                                    textAlign: 'left',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    Developer
-                                </th>
-                                <th style={{
-                                    padding: '14px 20px',
-                                    textAlign: 'left',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    Score
-                                </th>
-                                <th style={{
-                                    padding: '14px 20px',
-                                    textAlign: 'left',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    Skills
-                                </th>
-                                <th style={{
-                                    padding: '14px 20px',
-                                    textAlign: 'left',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    Availability
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {developers.map((dev, idx) => (
-                                <tr
-                                    key={dev._id}
-                                    style={{
-                                        borderBottom: idx < developers.length - 1 ? '1px solid var(--border)' : 'none',
-                                        transition: 'background-color 0.15s'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
-                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    <td style={{
-                                        padding: '14px 20px',
-                                        fontSize: 13,
-                                        fontWeight: 600,
-                                        color: 'var(--text-primary)'
-                                    }}>
-                                        #{idx + 1}
-                                        {idx === 0 && ' 🥇'}
-                                        {idx === 1 && ' 🥈'}
-                                        {idx === 2 && ' 🥉'}
-                                    </td>
-                                    <td style={{
-                                        padding: '14px 20px',
-                                        fontSize: 13
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                            <img
-                                                src={dev.userId?.avatarUrl}
-                                                alt={dev.userId?.username}
-                                                style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid var(--border)' }}
-                                            />
-                                            <div>
-                                                <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
-                                                    {dev.userId?.username}
-                                                </p>
-                                                <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                                                    @{dev.githubUsername}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td style={{
-                                        padding: '14px 20px',
-                                        fontSize: 13,
-                                        fontFamily: 'var(--font-mono)',
-                                        fontWeight: 600,
-                                        color: 'var(--accent-text)'
-                                    }}>
-                                        {dev.score.toFixed(1)}
-                                    </td>
-                                    <td style={{
-                                        padding: '14px 20px',
-                                        fontSize: 12
-                                    }}>
-                                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                                            {dev.skills.slice(0, 3).map(skill => (
-                                                <span key={skill.tag} style={{
-                                                    padding: '3px 8px',
-                                                    borderRadius: 4,
-                                                    background: 'var(--accent-dim)',
-                                                    color: 'var(--accent-text)',
-                                                    fontSize: 11,
-                                                    fontWeight: 500
-                                                }}>
-                                                    {skill.tag}
-                                                </span>
-                                            ))}
-                                            {dev.skills.length > 3 && (
-                                                <span style={{
-                                                    padding: '3px 8px',
-                                                    fontSize: 11,
-                                                    color: 'var(--text-muted)'
-                                                }}>
-                                                    +{dev.skills.length - 3}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td style={{
-                                        padding: '14px 20px',
-                                        fontSize: 12
-                                    }}>
-                                        <span style={{
-                                            padding: '4px 10px',
-                                            borderRadius: 6,
-                                            fontSize: 10,
-                                            fontWeight: 600,
-                                            textTransform: 'uppercase',
-                                            backgroundColor: dev.availability === 'open' ? 'var(--green-dim)' : dev.availability === 'busy' ? 'var(--amber-dim)' : 'var(--red-dim)',
-                                            color: dev.availability === 'open' ? 'var(--green)' : dev.availability === 'busy' ? 'var(--amber)' : 'var(--red)'
-                                        }}>
-                                            {dev.availability === 'open' ? '⬤ Open' : dev.availability === 'busy' ? '⬤ Busy' : '⬤ Closed'}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    padding: '40px',
-                    textAlign: 'center',
-                    color: 'var(--text-muted)'
-                }}>
-                    No developers found with selected filters
-                </div>
+            {/* Empty state helper */}
+            {!loading && developers.length === 0 && (
+                <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginTop: 24 }}>
+                    The leaderboard fills up as developers sync their GitHub. Go to your dashboard and sync first.
+                </p>
             )}
-
         </div>
     )
 }
 
 export default Leaderboard
-

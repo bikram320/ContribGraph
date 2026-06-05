@@ -1,319 +1,530 @@
-import { useEffect, useState } from 'react'
-import { searchDevelopers, saveDeveloper, removeSavedDeveloper, getSavedDevelopers } from '../api/search.api.js'
-import SearchFilters from '../components/SearchFilters.jsx'
-import SkillTag from '../components/SkillTag.jsx'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { searchDevelopers, saveDeveloper, getSavedDevelopers, removeSavedDeveloper } from '../api/search.api.js'
 import toast from 'react-hot-toast'
 
 const Search = () => {
-    const [developers, setDevelopers] = useState([])
-    const [savedIds, setSavedIds] = useState(new Set())
+    const [results, setResults] = useState([])
+    const [saved, setSaved] = useState([])
     const [loading, setLoading] = useState(false)
+    const [tab, setTab] = useState('search') // 'search' | 'saved'
     const [pagination, setPagination] = useState(null)
     const [filters, setFilters] = useState({
         skills: '',
         minScore: '',
         maxScore: '',
-        availability: ''
+        availability: '',
+        page: 1
     })
-    const [hasSearched, setHasSearched] = useState(false)
 
-    // Load saved developers on mount
+    // load saved list on mount
     useEffect(() => {
-        loadSavedDevelopers()
+        loadSaved()
     }, [])
 
-    const loadSavedDevelopers = async () => {
+    const loadSaved = async () => {
         try {
             const res = await getSavedDevelopers()
-            const ids = new Set(res.data.saved.map(dev => dev._id))
-            setSavedIds(ids)
+            setSaved(res.data.saved || [])
         } catch (err) {
-            console.error('Failed to load saved developers:', err)
+            console.error('Failed to load saved:', err)
         }
     }
 
-    const handleFilterChange = async (newFilters) => {
-        setFilters(newFilters)
-        await performSearch(newFilters, 1)
-    }
-
-    const performSearch = async (searchFilters, page = 1) => {
+    const handleSearch = async (e) => {
+        e?.preventDefault()
+        setLoading(true)
         try {
-            setLoading(true)
-            setHasSearched(true)
-
-            const params = {
-                page,
-                limit: 10
-            }
-
-            if (searchFilters.skills) params.skills = searchFilters.skills
-            if (searchFilters.minScore) params.minScore = searchFilters.minScore
-            if (searchFilters.maxScore) params.maxScore = searchFilters.maxScore
-            if (searchFilters.availability) params.availability = searchFilters.availability
+            const params = {}
+            if (filters.skills.trim()) params.skills = filters.skills.trim()
+            if (filters.minScore) params.minScore = filters.minScore
+            if (filters.maxScore) params.maxScore = filters.maxScore
+            if (filters.availability) params.availability = filters.availability
+            params.page = filters.page
+            params.limit = 10
 
             const res = await searchDevelopers(params)
-            setDevelopers(res.data.developers || [])
+            setResults(res.data.developers || [])
             setPagination(res.data.pagination)
         } catch (err) {
-            console.error('Search failed:', err)
-            toast.error(err.response?.data?.message || 'Search failed')
-            setDevelopers([])
+            toast.error('Search failed.')
+            console.error(err)
         } finally {
             setLoading(false)
         }
     }
 
-    const handleSaveDeveloper = async (developerId) => {
+    const handleSave = async (developerId) => {
         try {
             await saveDeveloper(developerId)
-            setSavedIds(prev => new Set([...prev, developerId]))
-            toast.success('Developer saved to shortlist')
-        } catch (err) {
-            console.error('Failed to save developer:', err)
-            toast.error(err.response?.data?.message || 'Failed to save developer')
+            toast.success('Developer saved to shortlist.')
+            await loadSaved()
+        } catch {
+            toast.error('Failed to save.')
         }
     }
 
-    const handleRemoveSavedDeveloper = async (developerId) => {
+    const handleRemove = async (developerId) => {
         try {
             await removeSavedDeveloper(developerId)
-            setSavedIds(prev => {
-                const newSet = new Set(prev)
-                newSet.delete(developerId)
-                return newSet
-            })
-            toast.success('Developer removed from shortlist')
-        } catch (err) {
-            console.error('Failed to remove developer:', err)
-            toast.error(err.response?.data?.message || 'Failed to remove developer')
+            toast.success('Removed from shortlist.')
+            await loadSaved()
+        } catch {
+            toast.error('Failed to remove.')
         }
     }
 
-    const handlePageChange = (newPage) => {
-        performSearch(filters, newPage)
+    const isSaved = (devId) => saved.some(s => s._id === devId)
+
+    const availabilityColor = {
+        open: { bg: 'var(--green-dim)', color: 'var(--green)' },
+        busy: { bg: 'var(--amber-dim)', color: 'var(--amber)' },
+        closed: { bg: 'var(--red-dim)', color: 'var(--red)' }
     }
 
-    return (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+    const DeveloperCard = ({ dev, onSave, onRemove, saved }) => (
+        <div style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 14,
+            padding: '20px 22px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            transition: 'border-color 0.15s'
+        }}
+             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+        >
+            {/* Avatar */}
+            {dev.userId?.avatarUrl ? (
+                <img
+                    src={dev.userId.avatarUrl}
+                    alt={dev.githubUsername}
+                    style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid var(--border)', flexShrink: 0 }}
+                />
+            ) : (
+                <div style={{
+                    width: 48, height: 48,
+                    borderRadius: 12,
+                    backgroundColor: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18, flexShrink: 0
+                }}>
+                    🧑‍💻
+                </div>
+            )}
 
-            {/* Header */}
-            <div style={{ marginBottom: 32 }}>
-                <h1 style={{ fontSize: 28, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 8 }}>
-                    Find Developers
-                </h1>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                    Search by skills, score, and availability. Save developers to your shortlist.
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <Link
+                        to={`/profile/${dev.githubUsername}`}
+                        style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', textDecoration: 'none' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-text)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                    >
+                        {dev.userId?.username || dev.githubUsername}
+                    </Link>
+                    {dev.availability && (
+                        <span style={{
+                            padding: '2px 8px',
+                            borderRadius: 5,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            backgroundColor: availabilityColor[dev.availability]?.bg,
+                            color: availabilityColor[dev.availability]?.color
+                        }}>
+              {dev.availability === 'open' ? '⬤ Open' : dev.availability === 'busy' ? '⬤ Busy' : '⬤ Closed'}
+            </span>
+                    )}
+                </div>
+
+                {/* Skills */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {dev.skills?.slice(0, 5).map(s => (
+                        <span key={s.tag} style={{
+                            padding: '2px 7px',
+                            borderRadius: 4,
+                            background: 'var(--bg-elevated)',
+                            border: '1px solid var(--border)',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            color: 'var(--text-muted)'
+                        }}>
+              {s.tag}
+            </span>
+                    ))}
+                    {dev.skills?.length > 5 && (
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', padding: '2px 4px' }}>
+              +{dev.skills.length - 5} more
+            </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Score */}
+            <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                <p style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 22,
+                    fontWeight: 600,
+                    color: 'var(--accent-text)',
+                    lineHeight: 1,
+                    marginBottom: 3
+                }}>
+                    {Number(dev.score).toFixed(1)}
+                </p>
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    score
                 </p>
             </div>
 
-            {/* Search Filters */}
-            <SearchFilters onFilterChange={handleFilterChange} isLoading={loading} />
+            {/* Action */}
+            <button
+                onClick={() => saved ? onRemove(dev._id) : onSave(dev._id)}
+                style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: `1px solid ${saved ? 'var(--red)' : 'var(--accent)'}`,
+                    background: saved ? 'var(--red-dim)' : 'var(--accent-dim)',
+                    color: saved ? 'var(--red)' : 'var(--accent-text)',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s',
+                    flexShrink: 0
+                }}
+            >
+                {saved ? '− Remove' : '+ Save'}
+            </button>
+        </div>
+    )
 
-            {/* Results */}
-            {hasSearched && (
+    return (
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+
+            {/* Header */}
+            <div style={{ marginBottom: 28 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 8 }}>
+                    Recruiter
+                </p>
+                <h1 style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 32,
+                    color: 'var(--text-primary)',
+                    letterSpacing: '-0.02em',
+                    marginBottom: 6
+                }}>
+                    Find Developers
+                </h1>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                    Search by skill, score range, and availability. All profiles are backed by real GitHub activity.
+                </p>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
+                {[
+                    { key: 'search', label: 'Search' },
+                    { key: 'saved', label: `Saved (${saved.length})` }
+                ].map(t => (
+                    <button key={t.key} onClick={() => setTab(t.key)} style={{
+                        padding: '10px 20px',
+                        background: 'none',
+                        border: 'none',
+                        borderBottom: `2px solid ${tab === t.key ? 'var(--accent)' : 'transparent'}`,
+                        color: tab === t.key ? 'var(--accent-text)' : 'var(--text-secondary)',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: 14,
+                        fontWeight: tab === t.key ? 600 : 400,
+                        cursor: 'pointer',
+                        marginBottom: -1,
+                        transition: 'all 0.15s'
+                    }}>
+                        {t.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Search tab */}
+            {tab === 'search' && (
                 <>
-                    {developers.length > 0 ? (
-                        <>
-                            <div style={{ marginBottom: 16 }}>
-                                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                                    Found <strong style={{ color: 'var(--text-primary)' }}>{pagination?.total || 0}</strong> developer{pagination?.total !== 1 ? 's' : ''}
-                                </p>
-                            </div>
-
-                            {/* Developer cards grid */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16, marginBottom: 24 }}>
-                                {developers.map(dev => (
-                                    <div key={dev._id} style={{
-                                        backgroundColor: 'var(--bg-surface)',
+                    {/* Filter form */}
+                    <form onSubmit={handleSearch} style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 14,
+                        padding: '20px 24px',
+                        marginBottom: 20
+                    }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
+                                    Skills
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="react, nodejs, python..."
+                                    value={filters.skills}
+                                    onChange={e => setFilters(f => ({ ...f, skills: e.target.value }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '9px 14px',
+                                        borderRadius: 8,
                                         border: '1px solid var(--border)',
-                                        borderRadius: 12,
-                                        padding: '18px 20px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        transition: 'all 0.15s'
+                                        background: 'var(--bg-elevated)',
+                                        color: 'var(--text-primary)',
+                                        fontFamily: 'var(--font-sans)',
+                                        fontSize: 13,
+                                        outline: 'none'
                                     }}
-                                        onMouseEnter={e => {
-                                            e.currentTarget.style.borderColor = 'var(--accent)'
-                                            e.currentTarget.style.boxShadow = 'var(--shadow-md)'
-                                        }}
-                                        onMouseLeave={e => {
-                                            e.currentTarget.style.borderColor = 'var(--border)'
-                                            e.currentTarget.style.boxShadow = 'none'
-                                        }}
-                                    >
-                                        {/* Header */}
-                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                                            <img
-                                                src={dev.userId?.avatarUrl}
-                                                alt={dev.userId?.username}
-                                                style={{ width: 40, height: 40, borderRadius: 8, border: '1px solid var(--border)' }}
-                                            />
-                                            <div style={{ flex: 1 }}>
-                                                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
-                                                    {dev.userId?.username}
-                                                </p>
-                                                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                    @{dev.githubUsername}
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={() => savedIds.has(dev._id)
-                                                    ? handleRemoveSavedDeveloper(dev._id)
-                                                    : handleSaveDeveloper(dev._id)
-                                                }
-                                                style={{
-                                                    width: 32,
-                                                    height: 32,
-                                                    borderRadius: 8,
-                                                    border: '1px solid var(--border)',
-                                                    background: savedIds.has(dev._id) ? 'var(--accent)' : 'var(--bg-elevated)',
-                                                    color: savedIds.has(dev._id) ? 'var(--bg-base)' : 'var(--text-secondary)',
-                                                    fontSize: 16,
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s'
-                                                }}
-                                                title={savedIds.has(dev._id) ? 'Remove from shortlist' : 'Add to shortlist'}
-                                            >
-                                                {savedIds.has(dev._id) ? '★' : '☆'}
-                                            </button>
-                                        </div>
-
-                                        {/* Score and availability */}
-                                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
-                                            <span style={{
-                                                padding: '4px 10px',
-                                                borderRadius: 6,
-                                                background: 'var(--accent-dim)',
-                                                fontFamily: 'var(--font-mono)',
-                                                fontSize: 12,
-                                                fontWeight: 600,
-                                                color: 'var(--accent-text)'
-                                            }}>
-                                                {dev.score?.toFixed(1) || '0'} pts
-                                            </span>
-                                            {dev.availability && (
-                                                <span style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: 6,
-                                                    fontSize: 10,
-                                                    fontWeight: 500,
-                                                    textTransform: 'uppercase',
-                                                    backgroundColor: dev.availability === 'open' ? 'var(--green-dim)' : dev.availability === 'busy' ? 'var(--amber-dim)' : 'var(--red-dim)',
-                                                    color: dev.availability === 'open' ? 'var(--green)' : dev.availability === 'busy' ? 'var(--amber)' : 'var(--red)'
-                                                }}>
-                                                    {dev.availability === 'open' ? '⬤ Open' : dev.availability === 'busy' ? '⬤ Busy' : '⬤ Closed'}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Skills */}
-                                        {dev.skills && dev.skills.length > 0 && (
-                                            <div style={{ marginBottom: 12 }}>
-                                                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 500 }}>
-                                                    Skills ({dev.skills.length})
-                                                </p>
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                                                    {dev.skills.slice(0, 5).map(skill => (
-                                                        <SkillTag key={skill.tag} skill={skill.tag} variant="highlight" />
-                                                    ))}
-                                                    {dev.skills.length > 5 && (
-                                                        <span style={{
-                                                            padding: '4px 8px',
-                                                            borderRadius: 6,
-                                                            fontSize: 11,
-                                                            color: 'var(--text-muted)',
-                                                            fontWeight: 500
-                                                        }}>
-                                                            +{dev.skills.length - 5} more
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Last sync */}
-                                        <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                                            Last synced {dev.lastSyncAt ? new Date(dev.lastSyncAt).toLocaleDateString() : 'never'}
-                                        </p>
-
-                                        {/* View profile link */}
-                                        <a
-                                            href={`/profile/${dev.githubUsername}`}
-                                            style={{
-                                                marginTop: 12,
-                                                padding: '8px 12px',
-                                                borderRadius: 8,
-                                                border: '1px solid var(--border)',
-                                                background: 'var(--bg-elevated)',
-                                                color: 'var(--text-secondary)',
-                                                textDecoration: 'none',
-                                                fontSize: 12,
-                                                fontWeight: 500,
-                                                textAlign: 'center',
-                                                transition: 'all 0.15s',
-                                                cursor: 'pointer'
-                                            }}
-                                            onMouseEnter={e => {
-                                                e.currentTarget.style.borderColor = 'var(--accent)'
-                                                e.currentTarget.style.color = 'var(--accent-text)'
-                                            }}
-                                            onMouseLeave={e => {
-                                                e.currentTarget.style.borderColor = 'var(--border)'
-                                                e.currentTarget.style.color = 'var(--text-secondary)'
-                                            }}
-                                        >
-                                            View Profile →
-                                        </a>
-                                    </div>
-                                ))}
+                                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                                />
                             </div>
 
-                            {/* Pagination */}
-                            {pagination && pagination.pages > 1 && (
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 24 }}>
-                                    {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(page => (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            disabled={page === pagination.page}
-                                            style={{
-                                                padding: '8px 12px',
-                                                borderRadius: 8,
-                                                border: '1px solid var(--border)',
-                                                background: page === pagination.page ? 'var(--accent)' : 'var(--bg-surface)',
-                                                color: page === pagination.page ? 'var(--bg-base)' : 'var(--text-secondary)',
-                                                fontWeight: 500,
-                                                fontSize: 12,
-                                                cursor: page === pagination.page ? 'default' : 'pointer',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            {page}
-                                        </button>
-                                    ))}
-                                </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
+                                    Availability
+                                </label>
+                                <select
+                                    value={filters.availability}
+                                    onChange={e => setFilters(f => ({ ...f, availability: e.target.value }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '9px 14px',
+                                        borderRadius: 8,
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--bg-elevated)',
+                                        color: 'var(--text-primary)',
+                                        fontFamily: 'var(--font-sans)',
+                                        fontSize: 13,
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="">Any availability</option>
+                                    <option value="open">Open to Work</option>
+                                    <option value="busy">Busy</option>
+                                    <option value="closed">Not Available</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
+                                    Min Score
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={filters.minScore}
+                                    onChange={e => setFilters(f => ({ ...f, minScore: e.target.value }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '9px 14px',
+                                        borderRadius: 8,
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--bg-elevated)',
+                                        color: 'var(--text-primary)',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontSize: 13,
+                                        outline: 'none'
+                                    }}
+                                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
+                                    Max Score
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="9999"
+                                    value={filters.maxScore}
+                                    onChange={e => setFilters(f => ({ ...f, maxScore: e.target.value }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '9px 14px',
+                                        borderRadius: 8,
+                                        border: '1px solid var(--border)',
+                                        background: 'var(--bg-elevated)',
+                                        color: 'var(--text-primary)',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontSize: 13,
+                                        outline: 'none'
+                                    }}
+                                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <button type="submit" disabled={loading} style={{
+                                padding: '9px 24px',
+                                borderRadius: 8,
+                                border: 'none',
+                                background: loading ? 'var(--bg-elevated)' : 'var(--accent)',
+                                color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
+                                fontWeight: 600,
+                                fontSize: 13,
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                fontFamily: 'var(--font-sans)',
+                                transition: 'all 0.15s'
+                            }}>
+                                {loading ? 'Searching...' : 'Search Developers'}
+                            </button>
+                            <button type="button" onClick={() => {
+                                setFilters({ skills: '', minScore: '', maxScore: '', availability: '', page: 1 })
+                                setResults([])
+                                setPagination(null)
+                            }} style={{
+                                padding: '9px 16px',
+                                borderRadius: 8,
+                                border: '1px solid var(--border)',
+                                background: 'transparent',
+                                color: 'var(--text-secondary)',
+                                fontSize: 13,
+                                cursor: 'pointer',
+                                fontFamily: 'var(--font-sans)'
+                            }}>
+                                Clear
+                            </button>
+                            {pagination && (
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
+                  {pagination.total} developer{pagination.total !== 1 ? 's' : ''} found
+                </span>
                             )}
-                        </>
-                    ) : (
+                        </div>
+                    </form>
+
+                    {/* Results */}
+                    {results.length === 0 && !loading && pagination && (
                         <div style={{
+                            textAlign: 'center',
+                            padding: '48px 24px',
+                            color: 'var(--text-muted)',
+                            fontSize: 14
+                        }}>
+                            No developers matched your filters.
+                        </div>
+                    )}
+
+                    {results.length === 0 && !loading && !pagination && (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '48px 24px',
                             backgroundColor: 'var(--bg-surface)',
                             border: '1px solid var(--border)',
-                            borderRadius: 12,
-                            padding: '32px 24px',
-                            textAlign: 'center'
+                            borderRadius: 14,
+                            color: 'var(--text-muted)',
+                            fontSize: 14
                         }}>
-                            <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-                                No developers found matching your criteria. Try adjusting your filters.
-                            </p>
+                            <p style={{ marginBottom: 8 }}>Search for developers above.</p>
+                            <p style={{ fontSize: 12 }}>Filter by skill (e.g. "react"), minimum score, or availability status.</p>
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {results.map(dev => (
+                            <DeveloperCard
+                                key={dev._id}
+                                dev={dev}
+                                saved={isSaved(dev._id)}
+                                onSave={handleSave}
+                                onRemove={handleRemove}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {pagination && pagination.pages > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
+                            <button
+                                onClick={() => {
+                                    setFilters(f => ({ ...f, page: f.page - 1 }))
+                                    handleSearch()
+                                }}
+                                disabled={pagination.page <= 1}
+                                style={{
+                                    padding: '7px 16px',
+                                    borderRadius: 8,
+                                    border: '1px solid var(--border)',
+                                    background: 'transparent',
+                                    color: pagination.page <= 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                                    cursor: pagination.page <= 1 ? 'not-allowed' : 'pointer',
+                                    fontSize: 13,
+                                    fontFamily: 'var(--font-sans)'
+                                }}
+                            >
+                                ← Prev
+                            </button>
+                            <span style={{ padding: '7px 14px', fontSize: 13, color: 'var(--text-muted)' }}>
+                Page {pagination.page} of {pagination.pages}
+              </span>
+                            <button
+                                onClick={() => {
+                                    setFilters(f => ({ ...f, page: f.page + 1 }))
+                                    handleSearch()
+                                }}
+                                disabled={pagination.page >= pagination.pages}
+                                style={{
+                                    padding: '7px 16px',
+                                    borderRadius: 8,
+                                    border: '1px solid var(--border)',
+                                    background: 'transparent',
+                                    color: pagination.page >= pagination.pages ? 'var(--text-muted)' : 'var(--text-primary)',
+                                    cursor: pagination.page >= pagination.pages ? 'not-allowed' : 'pointer',
+                                    fontSize: 13,
+                                    fontFamily: 'var(--font-sans)'
+                                }}
+                            >
+                                Next →
+                            </button>
                         </div>
                     )}
                 </>
             )}
 
+            {/* Saved tab */}
+            {tab === 'saved' && (
+                <>
+                    {saved.length === 0 ? (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '48px 24px',
+                            backgroundColor: 'var(--bg-surface)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 14
+                        }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 8 }}>Your shortlist is empty.</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                                Search for developers and click "+ Save" to add them here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            {saved.map(dev => (
+                                <DeveloperCard
+                                    key={dev._id}
+                                    dev={dev}
+                                    saved={true}
+                                    onSave={handleSave}
+                                    onRemove={handleRemove}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     )
 }
 
 export default Search
-

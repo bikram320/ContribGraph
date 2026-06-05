@@ -7,7 +7,8 @@ const useAuthStore = create(
             user: null,
             developer: null,
             isAuthenticated: false,
-            isLoading: false,
+            isLoading: true,       // ← start true: ProtectedRoute waits until fetchMe settles
+            hasHydrated: false,    // ← flips once on app boot, prevents fetchMe running twice
 
             setUser: (user, developer) => set({
                 user,
@@ -18,6 +19,8 @@ const useAuthStore = create(
             setDeveloper: (developer) => set({ developer }),
 
             setLoading: (isLoading) => set({ isLoading }),
+
+            setHydrated: () => set({ hasHydrated: true }),
 
             logout: () => set({
                 user: null,
@@ -39,7 +42,8 @@ const useAuthStore = create(
         }),
         {
             name: 'contribgraph-auth',
-            // only persist these fields — not loading state
+            // isLoading and hasHydrated are never persisted —
+            // they must always reset to their initial values on page load
             partialize: (state) => ({
                 user: state.user,
                 developer: state.developer,

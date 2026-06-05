@@ -9,7 +9,7 @@ import passport from 'passport'
 import connectDB from './config/db.js'
 import './config/passport.js'
 
-import { generalLimiter } from './middleware/rateLimiter.js'
+import { generalLimiter, authLimiter } from './middleware/rateLimiter.js'
 import auditLogger from './middleware/auditLogger.js'
 import auth from './middleware/auth.js'
 import rbac from './middleware/rbac.js'
@@ -36,25 +36,30 @@ connectDB()
 
 const app = express()
 
-// Middleware
-app.use(
-    cors({
-        origin: process.env.CLIENT_URL,
-        credentials: true
-    })
-)
+// =====================================================
+// Core Middleware
+// =====================================================
+
+app.use(cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true
+}))
 
 app.use(express.json())
 app.use(cookieParser())
 app.use(passport.initialize())
-app.use(generalLimiter)
 app.use(auditLogger)
 
 // =====================================================
 // API Routes
 // =====================================================
 
-app.use('/api/auth', authRoutes)
+// Auth routes use their own looser limiter — must be registered
+// BEFORE generalLimiter so the general one doesn't fire first
+app.use('/api/auth', authLimiter, authRoutes)
+
+// Everything else gets the general limiter
+app.use(generalLimiter)
 app.use('/api/developers', developerRoutes)
 app.use('/api/scores', scoreRoutes)
 app.use('/api/search', searchRoutes)
