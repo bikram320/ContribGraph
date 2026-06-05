@@ -78,7 +78,6 @@ const Dashboard = () => {
         setUpdatingAvailability(true)
         try {
             await updateAvailability(newVal)
-            // update local store immediately — optimistic update
             setDeveloper({ ...developer, availability: newVal })
             toast.success(`Availability set to "${newVal}"`)
         } catch {
@@ -94,22 +93,41 @@ const Dashboard = () => {
         { val: 'closed', label: 'Not Available', color: 'var(--red)', dim: 'var(--red-dim)' }
     ]
 
-    // compute max breakdown value for bar scaling
     const breakdownData = scoreBreakdown || {}
     const maxBreakdown = Math.max(...Object.values(breakdownData), 1)
 
     return (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+                .dashboard-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+                .dashboard-main { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+                .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+                .sync-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+                .sync-btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+                .token-input { width: 240px; }
+                @media (max-width: 900px) {
+                    .dashboard-main { grid-template-columns: 1fr !important; }
+                }
+                @media (max-width: 600px) {
+                    .stats-grid { grid-template-columns: 1fr 1fr !important; }
+                    .dashboard-header { gap: 12px; }
+                    .sync-row { flex-direction: column; align-items: flex-start; }
+                    .sync-btns { width: 100%; }
+                    .token-input { width: 100% !important; }
+                    .event-repo { display: none !important; }
+                }
+            `}</style>
 
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+            <div className="dashboard-header">
                 <img
                     src={user?.avatarUrl}
                     alt={user?.username}
-                    style={{ width: 56, height: 56, borderRadius: 14, border: '2px solid var(--border)' }}
+                    style={{ width: 52, height: 52, borderRadius: 14, border: '2px solid var(--border)', flexShrink: 0 }}
                 />
-                <div style={{ flex: 1 }}>
-                    <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 3 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 3 }}>
                         Hey, {user?.username} 👋
                     </h1>
                     <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
@@ -118,7 +136,6 @@ const Dashboard = () => {
                             : 'Sync your GitHub to generate your score'}
                     </p>
                 </div>
-                {/* Role badge */}
                 <span style={{
                     padding: '4px 12px',
                     borderRadius: 6,
@@ -128,10 +145,11 @@ const Dashboard = () => {
                     textTransform: 'uppercase',
                     background: 'var(--accent-dim)',
                     border: '1px solid var(--accent)',
-                    color: 'var(--accent-text)'
+                    color: 'var(--accent-text)',
+                    flexShrink: 0
                 }}>
-          {user?.role}
-        </span>
+                    {user?.role}
+                </span>
             </div>
 
             {/* Sync banner */}
@@ -139,85 +157,84 @@ const Dashboard = () => {
                 backgroundColor: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 14,
-                padding: '18px 24px',
-                marginBottom: 24,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 16,
-                flexWrap: 'wrap'
+                padding: '18px 20px',
+                marginBottom: 20,
             }}>
-                <div>
-                    <p style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3, fontSize: 14 }}>
-                        Sync GitHub Activity
-                    </p>
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        Requires a GitHub personal access token with <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-elevated)', padding: '1px 5px', borderRadius: 4 }}>repo</code> and <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-elevated)', padding: '1px 5px', borderRadius: 4 }}>read:user</code> scopes
-                    </p>
-                </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                    {showTokenInput && (
-                        <input
-                            type="password"
-                            placeholder="ghp_xxxxxxxxxxxx"
-                            value={accessToken}
-                            onChange={e => setAccessToken(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleSync()}
-                            autoFocus
-                            style={{
-                                padding: '8px 14px',
-                                borderRadius: 8,
-                                border: '1px solid var(--accent)',
-                                background: 'var(--bg-elevated)',
-                                color: 'var(--text-primary)',
-                                fontFamily: 'var(--font-mono)',
-                                fontSize: 12,
-                                outline: 'none',
-                                width: 240
-                            }}
-                        />
-                    )}
-                    {showTokenInput && (
+                <div className="sync-row">
+                    <div>
+                        <p style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 3, fontSize: 14 }}>
+                            Sync GitHub Activity
+                        </p>
+                        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                            Requires a GitHub token with{' '}
+                            <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-elevated)', padding: '1px 5px', borderRadius: 4 }}>repo</code>{' '}
+                            and{' '}
+                            <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-elevated)', padding: '1px 5px', borderRadius: 4 }}>read:user</code>{' '}
+                            scopes
+                        </p>
+                    </div>
+                    <div className="sync-btns">
+                        {showTokenInput && (
+                            <input
+                                type="password"
+                                className="token-input"
+                                placeholder="ghp_xxxxxxxxxxxx"
+                                value={accessToken}
+                                onChange={e => setAccessToken(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleSync()}
+                                autoFocus
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: 8,
+                                    border: '1px solid var(--accent)',
+                                    background: 'var(--bg-elevated)',
+                                    color: 'var(--text-primary)',
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: 12,
+                                    outline: 'none',
+                                }}
+                            />
+                        )}
+                        {showTokenInput && (
+                            <button
+                                onClick={() => { setShowTokenInput(false); setAccessToken('') }}
+                                style={{
+                                    padding: '8px 12px',
+                                    borderRadius: 8,
+                                    border: '1px solid var(--border)',
+                                    background: 'transparent',
+                                    color: 'var(--text-muted)',
+                                    cursor: 'pointer',
+                                    fontSize: 13
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        )}
                         <button
-                            onClick={() => { setShowTokenInput(false); setAccessToken('') }}
+                            onClick={handleSync}
+                            disabled={isSyncing}
                             style={{
-                                padding: '8px 12px',
+                                padding: '9px 20px',
                                 borderRadius: 8,
-                                border: '1px solid var(--border)',
-                                background: 'transparent',
-                                color: 'var(--text-muted)',
-                                cursor: 'pointer',
-                                fontSize: 13
+                                border: 'none',
+                                background: isSyncing ? 'var(--bg-elevated)' : 'var(--accent)',
+                                color: isSyncing ? 'var(--text-muted)' : 'var(--bg-base)',
+                                fontWeight: 600,
+                                fontSize: 13,
+                                cursor: isSyncing ? 'not-allowed' : 'pointer',
+                                fontFamily: 'var(--font-sans)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 7,
+                                transition: 'all 0.15s',
+                                whiteSpace: 'nowrap'
                             }}
                         >
-                            Cancel
+                            <span style={{ display: 'inline-block', animation: isSyncing ? 'spin 1s linear infinite' : 'none' }}>↻</span>
+                            {isSyncing ? 'Syncing...' : 'Sync GitHub'}
                         </button>
-                    )}
-                    <button
-                        onClick={handleSync}
-                        disabled={isSyncing}
-                        style={{
-                            padding: '9px 20px',
-                            borderRadius: 8,
-                            border: 'none',
-                            background: isSyncing ? 'var(--bg-elevated)' : 'var(--accent)',
-                            color: isSyncing ? 'var(--text-muted)' : 'var(--bg-base)',
-                            fontWeight: 600,
-                            fontSize: 13,
-                            cursor: isSyncing ? 'not-allowed' : 'pointer',
-                            fontFamily: 'var(--font-sans)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 7,
-                            transition: 'all 0.15s'
-                        }}
-                    >
-            <span style={{
-                display: 'inline-block',
-                animation: isSyncing ? 'spin 1s linear infinite' : 'none'
-            }}>↻</span>
-                        {isSyncing ? 'Syncing...' : 'Sync GitHub'}
-                    </button>
+                    </div>
                 </div>
             </div>
 
@@ -228,10 +245,10 @@ const Dashboard = () => {
                     border: '1px solid var(--green)',
                     borderRadius: 10,
                     padding: '12px 18px',
-                    marginBottom: 24,
+                    marginBottom: 20,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 20,
+                    gap: 16,
                     flexWrap: 'wrap',
                     fontSize: 13
                 }}>
@@ -244,13 +261,13 @@ const Dashboard = () => {
             )}
 
             {/* Main two-column layout */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
+            <div className="dashboard-main">
 
                 {/* Left column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
                     {/* Stats row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                    <div className="stats-grid">
                         <ScoreCard title="Reputation Score" value={developer?.score?.toFixed(2) || '—'} sub="time-decayed" accent />
                         <ScoreCard title="Skills Detected" value={developer?.skills?.length || 0} sub="from GitHub repos" />
                         <ScoreCard title="Total Events" value={events?.length || 0} sub="contributions tracked" />
@@ -262,7 +279,7 @@ const Dashboard = () => {
                             backgroundColor: 'var(--bg-surface)',
                             border: '1px solid var(--border)',
                             borderRadius: 14,
-                            padding: '20px 24px'
+                            padding: '20px 22px'
                         }}>
                             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 18 }}>
                                 Score Breakdown
@@ -276,8 +293,8 @@ const Dashboard = () => {
                                                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{EVENT_LABELS[type] || type}</span>
                                             </div>
                                             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-primary)' }}>
-                        {Number(pts).toFixed(1)}
-                      </span>
+                                                {Number(pts).toFixed(1)}
+                                            </span>
                                         </div>
                                         <div style={{ height: 5, background: 'var(--bg-elevated)', borderRadius: 3, overflow: 'hidden' }}>
                                             <div style={{
@@ -300,7 +317,7 @@ const Dashboard = () => {
                             backgroundColor: 'var(--bg-surface)',
                             border: '1px solid var(--border)',
                             borderRadius: 14,
-                            padding: '20px 24px'
+                            padding: '20px 22px'
                         }}>
                             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>
                                 Activity Timeline
@@ -315,7 +332,7 @@ const Dashboard = () => {
                             backgroundColor: 'var(--bg-surface)',
                             border: '1px solid var(--border)',
                             borderRadius: 14,
-                            padding: '20px 24px'
+                            padding: '20px 22px'
                         }}>
                             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>
                                 Recent Activity
@@ -325,33 +342,33 @@ const Dashboard = () => {
                                     <div key={event._id || i} style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: 12,
+                                        gap: 10,
                                         padding: '10px 0',
                                         borderBottom: i < 7 ? '1px solid var(--border-subtle)' : 'none'
                                     }}>
-                    <span style={{
-                        width: 8, height: 8,
-                        borderRadius: '50%',
-                        background: EVENT_COLORS[event.type],
-                        flexShrink: 0
-                    }} />
-                                        <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>
-                      {EVENT_LABELS[event.type]}
-                    </span>
                                         <span style={{
+                                            width: 8, height: 8,
+                                            borderRadius: '50%',
+                                            background: EVENT_COLORS[event.type],
+                                            flexShrink: 0
+                                        }} />
+                                        <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>
+                                            {EVENT_LABELS[event.type]}
+                                        </span>
+                                        <span className="event-repo" style={{
                                             fontFamily: 'var(--font-mono)',
                                             fontSize: 11,
                                             color: 'var(--text-muted)',
-                                            maxWidth: 200,
+                                            maxWidth: 160,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}>
-                      {event.repoName}
-                    </span>
+                                            {event.repoName}
+                                        </span>
                                         <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
-                      {new Date(event.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
+                                            {new Date(event.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        </span>
                                         <span style={{
                                             fontFamily: 'var(--font-mono)',
                                             fontSize: 11,
@@ -359,8 +376,8 @@ const Dashboard = () => {
                                             flexShrink: 0,
                                             fontWeight: 500
                                         }}>
-                      +{event.weight}
-                    </span>
+                                            +{event.weight}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -404,12 +421,7 @@ const Dashboard = () => {
                                         textAlign: 'left'
                                     }}
                                 >
-                  <span style={{
-                      width: 8, height: 8,
-                      borderRadius: '50%',
-                      background: opt.color,
-                      flexShrink: 0
-                  }} />
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />
                                     {opt.label}
                                     {developer?.availability === opt.val && (
                                         <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.7 }}>active</span>
@@ -441,8 +453,8 @@ const Dashboard = () => {
                                         fontSize: 11,
                                         color: 'var(--text-secondary)'
                                     }}>
-                    {skill.tag}
-                  </span>
+                                        {skill.tag}
+                                    </span>
                                 ))}
                             </div>
                         </div>
@@ -482,10 +494,6 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-
-            <style>{`
-        @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-      `}</style>
         </div>
     )
 }

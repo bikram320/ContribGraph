@@ -4,17 +4,26 @@ import api from '../api/axios.js'
 
 const MEDAL = { 0: '🥇', 1: '🥈', 2: '🥉' }
 
+const useIsMobile = () => {
+    const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640)
+    useEffect(() => {
+        const fn = () => setMobile(window.innerWidth < 640)
+        window.addEventListener('resize', fn)
+        return () => window.removeEventListener('resize', fn)
+    }, [])
+    return mobile
+}
+
 const Leaderboard = () => {
     const [developers, setDevelopers] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
+    const isMobile = useIsMobile()
 
     useEffect(() => {
         const load = async () => {
             try {
                 setLoading(true)
-                // uses the public search endpoint — no auth needed
-                // sorted by score descending by default
                 const res = await api.get('/search/developers', {
                     params: { limit: 20, page: 1 }
                 })
@@ -34,14 +43,14 @@ const Leaderboard = () => {
         : developers.filter(d => d.availability === filter)
 
     return (
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: isMobile ? '24px 16px' : '32px 24px' }}>
 
             {/* Header */}
-            <div style={{ marginBottom: 32 }}>
+            <div style={{ marginBottom: 28 }}>
                 <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 8 }}>
                     Community
                 </p>
-                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 8 }}>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 28 : 36, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 8 }}>
                     Developer Leaderboard
                 </h1>
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
@@ -50,14 +59,14 @@ const Leaderboard = () => {
             </div>
 
             {/* Filter tabs */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
                 {[
-                    { val: 'all', label: 'All Developers' },
-                    { val: 'open', label: '🟢 Open to Work' },
+                    { val: 'all', label: 'All' },
+                    { val: 'open', label: '🟢 Open' },
                     { val: 'busy', label: '🟡 Busy' }
                 ].map(opt => (
                     <button key={opt.val} onClick={() => setFilter(opt.val)} style={{
-                        padding: '7px 16px',
+                        padding: isMobile ? '6px 14px' : '7px 16px',
                         borderRadius: 8,
                         fontSize: 13,
                         fontWeight: 500,
@@ -79,21 +88,39 @@ const Leaderboard = () => {
                 borderRadius: 14,
                 overflow: 'hidden'
             }}>
-
                 {/* Table header */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '48px 1fr 120px 80px',
-                    padding: '12px 20px',
-                    borderBottom: '1px solid var(--border)',
-                    backgroundColor: 'var(--bg-elevated)'
-                }}>
-                    {['Rank', 'Developer', 'Skills', 'Score'].map(h => (
-                        <span key={h} style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-              {h}
-            </span>
-                    ))}
-                </div>
+                {!isMobile && (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '48px 1fr 120px 80px',
+                        padding: '12px 20px',
+                        borderBottom: '1px solid var(--border)',
+                        backgroundColor: 'var(--bg-elevated)'
+                    }}>
+                        {['Rank', 'Developer', 'Skills', 'Score'].map(h => (
+                            <span key={h} style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                                {h}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                {/* Mobile header */}
+                {isMobile && (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '40px 1fr 60px',
+                        padding: '10px 16px',
+                        borderBottom: '1px solid var(--border)',
+                        backgroundColor: 'var(--bg-elevated)'
+                    }}>
+                        {['#', 'Developer', 'Score'].map(h => (
+                            <span key={h} style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                                {h}
+                            </span>
+                        ))}
+                    </div>
+                )}
 
                 {loading ? (
                     <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
@@ -106,98 +133,164 @@ const Leaderboard = () => {
                     </div>
                 ) : (
                     filtered.map((dev, i) => (
-                        <Link
-                            key={dev._id}
-                            to={`/profile/${dev.githubUsername}`}
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: '48px 1fr 120px 80px',
-                                padding: '14px 20px',
-                                borderBottom: i < filtered.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                                textDecoration: 'none',
-                                alignItems: 'center',
-                                transition: 'background 0.15s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
-                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                        >
-                            {/* Rank */}
-                            <span style={{
-                                fontFamily: 'var(--font-mono)',
-                                fontSize: i < 3 ? 18 : 13,
-                                color: i < 3 ? 'var(--text-primary)' : 'var(--text-muted)',
-                                fontWeight: 600
-                            }}>
-                {MEDAL[i] || `#${i + 1}`}
-              </span>
+                        isMobile ? (
+                            /* Mobile row — 3 columns, no Skills */
+                            <Link
+                                key={dev._id}
+                                to={`/profile/${dev.githubUsername}`}
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '40px 1fr 60px',
+                                    padding: '12px 16px',
+                                    borderBottom: i < filtered.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                                    textDecoration: 'none',
+                                    alignItems: 'center',
+                                    transition: 'background 0.15s'
+                                }}
+                                onTouchStart={e => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
+                                onTouchEnd={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                {/* Rank */}
+                                <span style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: i < 3 ? 16 : 13,
+                                    color: i < 3 ? 'var(--text-primary)' : 'var(--text-muted)',
+                                    fontWeight: 600
+                                }}>
+                                    {MEDAL[i] || `#${i + 1}`}
+                                </span>
 
-                            {/* Developer */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                {dev.userId?.avatarUrl && (
-                                    <img
-                                        src={dev.userId.avatarUrl}
-                                        alt={dev.githubUsername}
-                                        style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border)', flexShrink: 0 }}
-                                    />
-                                )}
-                                <div>
-                                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>
-                                        {dev.userId?.username || dev.githubUsername}
-                                    </p>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        padding: '1px 6px',
-                        borderRadius: 4,
-                        backgroundColor: dev.availability === 'open' ? 'var(--green-dim)' : dev.availability === 'busy' ? 'var(--amber-dim)' : 'var(--bg-elevated)',
-                        color: dev.availability === 'open' ? 'var(--green)' : dev.availability === 'busy' ? 'var(--amber)' : 'var(--text-muted)',
-                    }}>
-                      {dev.availability}
-                    </span>
+                                {/* Developer */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                                    {dev.userId?.avatarUrl && (
+                                        <img
+                                            src={dev.userId.avatarUrl}
+                                            alt={dev.githubUsername}
+                                            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', flexShrink: 0 }}
+                                        />
+                                    )}
+                                    <div style={{ minWidth: 0 }}>
+                                        <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {dev.userId?.username || dev.githubUsername}
+                                        </p>
+                                        <span style={{
+                                            fontSize: 10,
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            padding: '1px 5px',
+                                            borderRadius: 4,
+                                            backgroundColor: dev.availability === 'open' ? 'var(--green-dim)' : dev.availability === 'busy' ? 'var(--amber-dim)' : 'var(--bg-elevated)',
+                                            color: dev.availability === 'open' ? 'var(--green)' : dev.availability === 'busy' ? 'var(--amber)' : 'var(--text-muted)',
+                                        }}>
+                                            {dev.availability}
+                                        </span>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Skills */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                {dev.skills?.slice(0, 2).map(s => (
-                                    <span key={s.tag} style={{
-                                        padding: '2px 6px',
-                                        borderRadius: 4,
-                                        background: 'var(--bg-elevated)',
-                                        border: '1px solid var(--border)',
-                                        fontFamily: 'var(--font-mono)',
-                                        fontSize: 10,
-                                        color: 'var(--text-muted)'
-                                    }}>
-                    {s.tag}
-                  </span>
-                                ))}
-                                {dev.skills?.length > 2 && (
-                                    <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 4px' }}>
-                    +{dev.skills.length - 2}
-                  </span>
-                                )}
-                            </div>
+                                {/* Score */}
+                                <span style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: 15,
+                                    fontWeight: 600,
+                                    color: i === 0 ? 'var(--accent-text)' : 'var(--text-primary)',
+                                    textAlign: 'right'
+                                }}>
+                                    {Number(dev.score).toFixed(1)}
+                                </span>
+                            </Link>
+                        ) : (
+                            /* Desktop row — 4 columns with Skills */
+                            <Link
+                                key={dev._id}
+                                to={`/profile/${dev.githubUsername}`}
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '48px 1fr 120px 80px',
+                                    padding: '14px 20px',
+                                    borderBottom: i < filtered.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                                    textDecoration: 'none',
+                                    alignItems: 'center',
+                                    transition: 'background 0.15s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'}
+                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                {/* Rank */}
+                                <span style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: i < 3 ? 18 : 13,
+                                    color: i < 3 ? 'var(--text-primary)' : 'var(--text-muted)',
+                                    fontWeight: 600
+                                }}>
+                                    {MEDAL[i] || `#${i + 1}`}
+                                </span>
 
-                            {/* Score */}
-                            <span style={{
-                                fontFamily: 'var(--font-mono)',
-                                fontSize: 16,
-                                fontWeight: 600,
-                                color: i === 0 ? 'var(--accent-text)' : 'var(--text-primary)'
-                            }}>
-                {Number(dev.score).toFixed(1)}
-              </span>
-                        </Link>
+                                {/* Developer */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    {dev.userId?.avatarUrl && (
+                                        <img
+                                            src={dev.userId.avatarUrl}
+                                            alt={dev.githubUsername}
+                                            style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border)', flexShrink: 0 }}
+                                        />
+                                    )}
+                                    <div>
+                                        <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>
+                                            {dev.userId?.username || dev.githubUsername}
+                                        </p>
+                                        <span style={{
+                                            fontSize: 10,
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            padding: '1px 6px',
+                                            borderRadius: 4,
+                                            backgroundColor: dev.availability === 'open' ? 'var(--green-dim)' : dev.availability === 'busy' ? 'var(--amber-dim)' : 'var(--bg-elevated)',
+                                            color: dev.availability === 'open' ? 'var(--green)' : dev.availability === 'busy' ? 'var(--amber)' : 'var(--text-muted)',
+                                        }}>
+                                            {dev.availability}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Skills */}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                    {dev.skills?.slice(0, 2).map(s => (
+                                        <span key={s.tag} style={{
+                                            padding: '2px 6px',
+                                            borderRadius: 4,
+                                            background: 'var(--bg-elevated)',
+                                            border: '1px solid var(--border)',
+                                            fontFamily: 'var(--font-mono)',
+                                            fontSize: 10,
+                                            color: 'var(--text-muted)'
+                                        }}>
+                                            {s.tag}
+                                        </span>
+                                    ))}
+                                    {dev.skills?.length > 2 && (
+                                        <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 4px' }}>
+                                            +{dev.skills.length - 2}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Score */}
+                                <span style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: 16,
+                                    fontWeight: 600,
+                                    color: i === 0 ? 'var(--accent-text)' : 'var(--text-primary)'
+                                }}>
+                                    {Number(dev.score).toFixed(1)}
+                                </span>
+                            </Link>
+                        )
                     ))
                 )}
             </div>
 
-            {/* Empty state helper */}
             {!loading && developers.length === 0 && (
                 <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginTop: 24 }}>
                     The leaderboard fills up as developers sync their GitHub. Go to your dashboard and sync first.

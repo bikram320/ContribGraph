@@ -3,7 +3,18 @@ import { Link } from 'react-router-dom'
 import { searchDevelopers, saveDeveloper, getSavedDevelopers, removeSavedDeveloper } from '../api/search.api.js'
 import toast from 'react-hot-toast'
 
+const useIsMobile = () => {
+    const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+    useEffect(() => {
+        const fn = () => setMobile(window.innerWidth < 768)
+        window.addEventListener('resize', fn)
+        return () => window.removeEventListener('resize', fn)
+    }, [])
+    return mobile
+}
+
 const Search = () => {
+    const isMobile = useIsMobile()
     const [results, setResults] = useState([])
     const [saved, setSaved] = useState([])
     const [loading, setLoading] = useState(false)
@@ -87,99 +98,103 @@ const Search = () => {
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 14,
-            padding: '20px 22px',
+            padding: isMobile ? '16px' : '20px 22px',
             display: 'flex',
-            alignItems: 'center',
-            gap: 16,
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            gap: isMobile ? 12 : 16,
             transition: 'border-color 0.15s'
         }}
              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
         >
-            {/* Avatar */}
-            {dev.userId?.avatarUrl ? (
-                <img
-                    src={dev.userId.avatarUrl}
-                    alt={dev.githubUsername}
-                    style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid var(--border)', flexShrink: 0 }}
-                />
-            ) : (
-                <div style={{
-                    width: 48, height: 48,
-                    borderRadius: 12,
-                    backgroundColor: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 18, flexShrink: 0
-                }}>
-                    🧑‍💻
-                </div>
-            )}
+            {/* Avatar + Info + Score row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                {/* Avatar */}
+                {dev.userId?.avatarUrl ? (
+                    <img
+                        src={dev.userId.avatarUrl}
+                        alt={dev.githubUsername}
+                        style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid var(--border)', flexShrink: 0 }}
+                    />
+                ) : (
+                    <div style={{
+                        width: 48, height: 48,
+                        borderRadius: 12,
+                        backgroundColor: 'var(--bg-elevated)',
+                        border: '1px solid var(--border)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, flexShrink: 0
+                    }}>
+                        🧑‍💻
+                    </div>
+                )}
 
-            {/* Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <Link
-                        to={`/profile/${dev.githubUsername}`}
-                        style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', textDecoration: 'none' }}
-                        onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-text)'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                    >
-                        {dev.userId?.username || dev.githubUsername}
-                    </Link>
-                    {dev.availability && (
-                        <span style={{
-                            padding: '2px 8px',
-                            borderRadius: 5,
-                            fontSize: 11,
-                            fontWeight: 600,
-                            backgroundColor: availabilityColor[dev.availability]?.bg,
-                            color: availabilityColor[dev.availability]?.color
-                        }}>
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                        <Link
+                            to={`/profile/${dev.githubUsername}`}
+                            style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', textDecoration: 'none' }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-text)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                        >
+                            {dev.userId?.username || dev.githubUsername}
+                        </Link>
+                        {dev.availability && (
+                            <span style={{
+                                padding: '2px 8px',
+                                borderRadius: 5,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                backgroundColor: availabilityColor[dev.availability]?.bg,
+                                color: availabilityColor[dev.availability]?.color
+                            }}>
               {dev.availability === 'open' ? '⬤ Open' : dev.availability === 'busy' ? '⬤ Busy' : '⬤ Closed'}
             </span>
-                    )}
-                </div>
+                        )}
+                    </div>
 
-                {/* Skills */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                    {dev.skills?.slice(0, 5).map(s => (
-                        <span key={s.tag} style={{
-                            padding: '2px 7px',
-                            borderRadius: 4,
-                            background: 'var(--bg-elevated)',
-                            border: '1px solid var(--border)',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 11,
-                            color: 'var(--text-muted)'
-                        }}>
+                    {/* Skills */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {dev.skills?.slice(0, 5).map(s => (
+                            <span key={s.tag} style={{
+                                padding: '2px 7px',
+                                borderRadius: 4,
+                                background: 'var(--bg-elevated)',
+                                border: '1px solid var(--border)',
+                                fontFamily: 'var(--font-mono)',
+                                fontSize: 11,
+                                color: 'var(--text-muted)'
+                            }}>
               {s.tag}
             </span>
-                    ))}
-                    {dev.skills?.length > 5 && (
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)', padding: '2px 4px' }}>
+                        ))}
+                        {dev.skills?.length > 5 && (
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)', padding: '2px 4px' }}>
               +{dev.skills.length - 5} more
             </span>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            {/* Score */}
-            <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                <p style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 22,
-                    fontWeight: 600,
-                    color: 'var(--accent-text)',
-                    lineHeight: 1,
-                    marginBottom: 3
-                }}>
-                    {Number(dev.score).toFixed(1)}
-                </p>
-                <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    score
-                </p>
-            </div>
+                {/* Score */}
+                <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                    <p style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 22,
+                        fontWeight: 600,
+                        color: 'var(--accent-text)',
+                        lineHeight: 1,
+                        marginBottom: 3
+                    }}>
+                        {Number(dev.score).toFixed(1)}
+                    </p>
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        score
+                    </p>
+                </div>
+            </div>{/* end avatar+info+score row */}
 
             {/* Action */}
             <button
@@ -196,7 +211,8 @@ const Search = () => {
                     fontFamily: 'var(--font-sans)',
                     whiteSpace: 'nowrap',
                     transition: 'all 0.15s',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    width: isMobile ? '100%' : 'auto'
                 }}
             >
                 {saved ? '− Remove' : '+ Save'}
@@ -205,7 +221,7 @@ const Search = () => {
     )
 
     return (
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '24px 16px' : '32px 24px' }}>
 
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
@@ -261,7 +277,7 @@ const Search = () => {
                         padding: '20px 24px',
                         marginBottom: 20
                     }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 14 }}>
                             <div>
                                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>
                                     Skills
@@ -365,7 +381,7 @@ const Search = () => {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 10, alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap' }}>
                             <button type="submit" disabled={loading} style={{
                                 padding: '9px 24px',
                                 borderRadius: 8,

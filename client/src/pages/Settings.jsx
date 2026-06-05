@@ -3,7 +3,18 @@ import useAuthStore from '../store/authStore.js'
 import { updateAvailability } from '../api/developer.api.js'
 import toast from 'react-hot-toast'
 
+const useIsMobile = () => {
+    const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+    useEffect(() => {
+        const fn = () => setMobile(window.innerWidth < 768)
+        window.addEventListener('resize', fn)
+        return () => window.removeEventListener('resize', fn)
+    }, [])
+    return mobile
+}
+
 const Settings = () => {
+    const isMobile = useIsMobile()
     const { user, developer, updateAvailability: updateStore } = useAuthStore()
     const [availability, setAvailability] = useState(developer?.availability || 'closed')
     const [saving, setSaving] = useState(false)
@@ -33,7 +44,7 @@ const Settings = () => {
     }
 
     return (
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '24px 16px' : '32px 24px' }}>
 
             {/* Header */}
             <div style={{ marginBottom: 32 }}>
@@ -278,8 +289,9 @@ const Settings = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: isMobile ? 'flex-start' : 'center',
                         justifyContent: 'space-between',
+                        gap: isMobile ? 12 : 0,
                         padding: '12px 0'
                     }}>
                         <div>
@@ -301,14 +313,15 @@ const Settings = () => {
                         <input
                             type="checkbox"
                             defaultChecked={true}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', flexShrink: 0 }}
                         />
                     </div>
 
                     <div style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: isMobile ? 'flex-start' : 'center',
                         justifyContent: 'space-between',
+                        gap: isMobile ? 12 : 0,
                         padding: '12px 0',
                         borderTop: '1px solid var(--border)',
                         paddingTop: '16px'
@@ -332,7 +345,7 @@ const Settings = () => {
                         <input
                             type="checkbox"
                             defaultChecked={true}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', flexShrink: 0 }}
                         />
                     </div>
                 </div>
@@ -400,4 +413,3 @@ const Settings = () => {
 }
 
 export default Settings
-
