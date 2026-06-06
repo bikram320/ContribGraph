@@ -41,6 +41,14 @@ const app = express()
 // =====================================================
 
 app.use(cors({
+    origin: process.env.CLIENT_URL,   // https://contrib-graph.vercel.app
+    credentials: true,                // ← this must be true for cookies
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}))
+
+// also add this — handles preflight OPTIONS requests
+app.options('*', cors({
     origin: process.env.CLIENT_URL,
     credentials: true
 }))
