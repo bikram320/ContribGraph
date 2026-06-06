@@ -3,24 +3,27 @@ import User from '../models/User.js'
 
 const auth = async (req, res, next) => {
     try {
-        // read token from HttpOnly cookie
-        const token = req.cookies.token
+        // Try cookie first, then Authorization header
+        let token = req.cookies.token
+
+        if (!token) {
+            const authHeader = req.headers.authorization
+            if (authHeader?.startsWith('Bearer ')) {
+                token = authHeader.split(' ')[1]
+            }
+        }
 
         if (!token) {
             return res.status(401).json({ message: 'Not authenticated. Please log in.' })
         }
 
-        // verify and decode the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
-        // fetch fresh user from DB — catches deleted/banned accounts
         const user = await User.findById(decoded.id).select('-__v')
 
         if (!user) {
             return res.status(401).json({ message: 'User no longer exists.' })
         }
 
-        // attach user to request — available in all downstream middleware + controllers
         req.user = user
         next()
 

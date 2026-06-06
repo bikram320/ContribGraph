@@ -31,6 +31,15 @@ const Dashboard = () => {
     const [updatingAvailability, setUpdatingAvailability] = useState(false)
 
     useEffect(() => {
+        // Step 1: read token from URL FIRST, before any API calls
+        const params = new URLSearchParams(window.location.search)
+        const token = params.get('token')
+        if (token) {
+            localStorage.setItem('contribgraph-auth', token)
+            window.history.replaceState({}, '', '/dashboard')
+        }
+
+        // Step 2: now fetch profile (token is already in localStorage)
         const load = async () => {
             try {
                 const res = await getMyProfile()
