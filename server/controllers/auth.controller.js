@@ -44,18 +44,23 @@ export const githubLogin = (req, res) => {
 // ─────────────────────────────────────────────
 export const githubCallback = async (req, res) => {
     try {
-        // req.user is set by passport after successful OAuth
         const user = req.user
 
         if (!user) {
             return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`)
         }
 
-        // generate JWT and set cookie
+        // Set the cookie as before
         sendTokenCookie(res, user)
 
-        // redirect to frontend dashboard
-        res.redirect(`${process.env.CLIENT_URL}/dashboard`)
+        // Frontend reads it, hits /api/auth/me to validate, then discards it
+        const tempToken = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '2m' }  // only valid for 2 minutes
+        )
+
+        res.redirect(`${process.env.CLIENT_URL}/dashboard?token=${tempToken}`)
 
     } catch (error) {
         console.error('GitHub callback error:', error)
