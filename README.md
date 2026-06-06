@@ -23,7 +23,7 @@ profile they can share instead of a generic resume.
 
 | Service | URL |
 |---------|-----|
-| Frontend | https://contribgraph.vercel.app |
+| Frontend | https://contrib-graph.vercel.app |
 | Backend  | https://contribgraph.onrender.com |
 
 ---
