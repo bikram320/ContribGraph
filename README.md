@@ -1,320 +1,523 @@
-# 🚀 ContribGraph
+# ContribGraph
 
-**Your GitHub activity, scored and ranked. Show recruiters what you actually ship.**
+> A developer reputation platform built on real GitHub activity — not resumes.
 
-ContribGraph is a full-stack web application that analyzes your GitHub contributions, computes a time-decayed reputation score, and helps you showcase your skills to recruiters.
-
-## ✨ Features
-
-### For Developers 👨‍💻
-- 📊 **Smart Reputation Score** - AI-powered time-decayed scoring based on PRs, reviews, and commits
-- 🔍 **Skill Detection** - Automatic skill inference from your GitHub repositories
-- 📈 **Activity Analytics** - Visualize your contribution patterns and growth
-- ⚡ **Sync GitHub** - One-click sync to update your profile with latest activity
-- 🏆 **Leaderboards** - Compare your score with other developers
-- 👀 **Availability Status** - Let recruiters know if you're open to work
-
-### For Recruiters 🔎
-- 🎯 **Advanced Search** - Find developers by skills, score range, and availability
-- 💾 **Save Shortlists** - Keep track of candidates you're interested in
-- 🌐 **Public Profiles** - View detailed developer portfolios
-- 📊 **Quality Metrics** - Find developers based on actual contributions, not just resumes
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 19** - Modern UI library
-- **Vite** - Ultra-fast build tool
-- **Zustand** - Lightweight state management
-- **Recharts** - Data visualization
-- **React Router** - Client-side routing
-- **Axios** - HTTP client
-- **React Hot Toast** - Notifications
-- **Tailwind CSS** - Styling framework
-
-### Backend
-- **Node.js & Express** - Server runtime and framework
-- **MongoDB** - Document database
-- **Mongoose** - MongoDB ODM
-- **Passport.js** - Authentication middleware
-- **GitHub API** - Data ingestion
-- **JWT** - Secure tokens
-- **Rate Limiting** - Prevent abuse
-
-## 📁 Project Structure
-
-```
-ContribGraph/
-├── client/                          # React frontend
-│   ├── src/
-│   │   ├── pages/                  # Route pages (Profile, Search, Dashboard, etc.)
-│   │   ├── components/             # Reusable UI components
-│   │   ├── hooks/                  # Custom React hooks
-│   │   ├── api/                    # API client methods
-│   │   ├── store/                  # Zustand state management
-│   │   └── assets/                 # Images and icons
-│   └── index.html
-│
-├── server/                          # Express backend
-│   ├── models/                     # MongoDB schemas
-│   ├── controllers/                # Business logic
-│   ├── routes/                     # API endpoints
-│   ├── middleware/                 # Auth, RBAC, logging
-│   ├── services/                   # Complex operations
-│   └── config/                     # Database, Passport setup
-│
-├── DEVELOPMENT_GUIDE.md            # How to add features
-├── FEATURE_GUIDE.md                # Common feature examples
-└── README.md                        # This file
-```
-
-## 🚀 Quick Start
-
-### 1. Install Dependencies
-
-```bash
-# Client
-cd client
-npm install
-
-# Server
-cd ../server
-npm install
-```
-
-### 2. Set Environment Variables
-
-Create `.env` in the root and `server/` directories:
-
-```bash
-# server/.env
-NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/contribgraph
-GITHUB_CLIENT_ID=your_github_oauth_id
-GITHUB_CLIENT_SECRET=your_github_oauth_secret
-SESSION_SECRET=your_secret_key
-JWT_SECRET=your_jwt_secret
-CLIENT_URL=http://localhost:5173
-```
-
-### 3. Start Development Servers
-
-```bash
-# Terminal 1 - Backend
-cd server
-npm start          # Runs on http://localhost:5000
-
-# Terminal 2 - Frontend
-cd client
-npm run dev        # Runs on http://localhost:5173
-```
-
-## 📖 Documentation
-
-### Getting Started
-- **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - Complete architecture overview and how to add features
-- **[FEATURE_GUIDE.md](./FEATURE_GUIDE.md)** - Common feature implementations (badges, notifications, etc.)
-
-### Key Sections in Guides
-- How to add new pages/routes
-- How to add backend endpoints
-- Creating MongoDB models
-- Building reusable components
-- State management with Zustand
-- Custom React hooks
-- Authentication & authorization
-- Error handling patterns
-
-## 📚 Pages & Routes
-
-| Route | Purpose | Auth Required |
-|-------|---------|--------------|
-| `/` | Landing page | No |
-| `/login` | OAuth GitHub login | No |
-| `/dashboard` | Personal dashboard | Yes (Developer) |
-| `/profile/:username` | Public developer profile | No |
-| `/search` | Search developers | Yes (Recruiter) |
-| `/leaderboard` | Top developers ranking | No |
-| `/settings` | Profile settings | Yes (Developer) |
-
-## 🎨 Design System
-
-All components use CSS variables defined in `client/src/index.css`:
-- **Colors**: Primary text, secondary text, muted, accent, borders
-- **Backgrounds**: Base, surface, elevated
-- **Status**: Green (open), amber (busy), red (closed)
-- **Themes**: Automatic light/dark mode support
-
-```jsx
-// Example: Using theme colors
-<div style={{
-    backgroundColor: 'var(--bg-surface)',
-    color: 'var(--text-primary)',
-    border: '1px solid var(--border)',
-    borderRadius: 12
-}}>
-    Content
-</div>
-```
-
-## 🔐 Authentication
-
-- **GitHub OAuth 2.0** - Primary authentication
-- **Session Management** - HTTP-only cookies
-- **JWT Tokens** - API request verification
-- **Role-Based Access Control** - Developer vs. Recruiter permissions
-
-## 🚢 Deployment
-
-### Frontend
-```bash
-npm run build       # Creates optimized build in dist/
-# Deploy dist/ folder to Vercel, Netlify, or any static host
-```
-
-### Backend
-```bash
-NODE_ENV=production
-npm start           # Start production server
-# Deploy to Heroku, AWS, Google Cloud, etc.
-```
-
-## 💡 How to Add New Features
-
-### Quick Example: Adding a New Page
-
-```jsx
-// 1. Create page file
-// client/src/pages/MyFeature.jsx
-import { useState, useEffect } from 'react'
-
-const MyFeature = () => {
-    const [data, setData] = useState(null)
-    
-    useEffect(() => {
-        // Fetch data
-    }, [])
-    
-    return (
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
-            {/* Your UI */}
-        </div>
-    )
-}
-
-export default MyFeature
-```
-
-```jsx
-// 2. Add route in App.jsx
-<Route path="/my-feature" element={<MyFeature />} />
-```
-
-For detailed guidance, see [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md).
-
-## 🌟 Feature Ideas
-
-Looking for what to build next? Here are some ideas:
-
-1. **Notifications System** - Real-time alerts for profile views and saves
-2. **Developer Badges** - Earn achievements for milestones
-3. **Saved Searches** - Recruiters can save search filters
-4. **Activity Feed** - Global timeline of recent activity
-5. **Skills Endorsements** - Peer endorsements for skills
-6. **Portfolio Showcase** - Link external projects and portfolios
-7. **Job Board Integration** - Recommendations based on skills
-8. **API Documentation** - Public API for third parties
-9. **Email Digest** - Weekly activity summaries
-10. **Advanced Analytics** - Career insights dashboard
-
-See [FEATURE_GUIDE.md](./FEATURE_GUIDE.md) for implementation examples.
-
-## 📊 API Endpoints
-
-### Authentication
-- `POST /api/auth/github` - GitHub OAuth login
-- `POST /api/auth/logout` - Logout
-
-### Developers
-- `GET /api/developers/me` - Get own profile
-- `GET /api/developers/profile/:username` - Get public profile
-- `POST /api/developers/sync` - Sync GitHub activity
-- `PATCH /api/developers/availability` - Update availability status
-- `GET /api/developers/me/events` - Get activity events
-
-### Search (Recruiter only)
-- `GET /api/search/developers` - Search developers with filters
-- `POST /api/search/saved` - Save a developer
-- `GET /api/search/saved` - Get saved developers
-- `DELETE /api/search/saved/:developerId` - Remove saved developer
-
-## 🐛 Troubleshooting
-
-### CORS Errors
-- Check `CLIENT_URL` in server `.env`
-- Ensure credentials are included in API calls
-
-### Database Connection Issues
-- Verify `MONGODB_URI` is correct
-- Check MongoDB service is running
-
-### GitHub Sync Failing
-- Verify GitHub token has correct scopes
-- Check rate limits on GitHub API
-
-### SSL Certificate Errors (Mac)
-- Run: `sudo /Applications/Python\ 3.x/Install\ Certificates.command`
-
-## 📋 Common Commands
-
-```bash
-# Development
-npm run dev              # Start dev server
-
-# Building
-npm run build           # Build for production
-npm run preview         # Preview production build
-
-# Linting
-npm run lint            # Check code quality
-
-# Database
-# Ensure MongoDB is running locally or connected via URI
-```
-
-## 🤝 Contributing
-
-This is an open-source project. Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-- Improve documentation
-
-## 📝 License
-
-MIT License - see LICENSE file for details
-
-## 👉 Next Steps
-
-1. **Read the [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - Understand the architecture
-2. **Check [FEATURE_GUIDE.md](./FEATURE_GUIDE.md)** - See common patterns
-3. **Start building!** - Add your own features
+![ContribGraph](https://img.shields.io/badge/stack-MERN-2DD4BF?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 ---
 
-## 🙌 Support
+## What is ContribGraph?
 
-For questions or issues:
-- Check the guides in this repo
-- Review existing code for patterns
-- Create an issue for bugs
+ContribGraph turns your GitHub history into a verifiable reputation score.
+Every merged PR, code review, closed issue, and commit is pulled from GitHub,
+weighted by importance, and decayed over time so your score always reflects
+**recent activity** — not what you did 3 years ago.
 
-## 🎯 Key Takeaways
+Recruiters can search developers by skill and score. Developers get a public
+profile they can share instead of a generic resume.
 
-✅ **Modern Stack** - React 19, Node.js, MongoDB  
-✅ **Fully Featured** - Auth, search, leaderboards, analytics  
-✅ **Well Documented** - Multiple guides for extension  
-✅ **Production Ready** - Error handling, validation, security  
-✅ **Easy to Extend** - Clear patterns for adding features  
+---
 
-Happy coding! 
+## Live Demo
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://contribgraph.vercel.app |
+| Backend  | https://contribgraph.onrender.com |
+
+---
+
+## The Score — How It Actually Works
+
+### Event Weights
+
+Every GitHub action has a fixed point value:
+
+| Action | Points | Why |
+|--------|--------|-----|
+| Merged PR | 10 | Highest signal — code was reviewed and accepted |
+| Code Review | 5 | Shows collaborative engineering, not just solo work |
+| Issue Closed | 3 | Problem solving and communication |
+| Commit Push | 1 | Raw activity signal |
+| Comment | 1 | Participation in discussions |
+
+### Time Decay — The Core Idea
+
+Raw point totals are meaningless. A developer with 1000 commits from 5 years
+ago and zero activity this year is not more valuable than someone actively
+shipping today.
+
+ContribGraph applies **exponential time decay** to every event:
+
+```
+decayMultiplier = e^(−λ × ageInDays)
+```
+
+Where:
+- `e` is Euler's number (~2.718)
+- `λ` (lambda) = 0.005 — controls the decay rate
+- `ageInDays` = how many days ago the event happened
+
+### What This Means in Practice
+
+```
+An event from today:      decay = e^(0)        = 1.0   (100% value)
+An event from 30 days:    decay = e^(-0.15)     = 0.86  (86% value)
+An event from 138 days:   decay = e^(-0.69)     = 0.50  (50% value)  ← half-life
+An event from 1 year:     decay = e^(-1.825)    = 0.16  (16% value)
+An event from 2 years:    decay = e^(-3.65)     = 0.026 (2.6% value)
+```
+
+The **half-life is ~138 days** — meaning an event from 4.5 months ago is
+worth half what it was on the day it happened.
+
+### Final Score Formula
+
+```
+score = Σ (event.weight × e^(−0.005 × ageInDays))
+```
+
+Summed across every ContribEvent document for that developer.
+
+### Worked Example
+
+Say a developer has three events:
+
+```
+Merged PR yesterday:          10 × e^(-0.005 × 1)   = 10 × 0.995 = 9.95 pts
+Code review 60 days ago:       5 × e^(-0.005 × 60)  =  5 × 0.741 = 3.70 pts
+Commit push 200 days ago:      1 × e^(-0.005 × 200) =  1 × 0.368 = 0.37 pts
+
+Total score = 14.02
+```
+
+This makes ContribGraph fundamentally different from GitHub's contribution
+graph — which just counts events without weighting or decay.
+
+---
+
+## Full Project Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        USER FLOW                                │
+└─────────────────────────────────────────────────────────────────┘
+
+1.  Developer visits ContribGraph landing page
+          ↓
+2.  Clicks "Sign in with GitHub"
+          ↓
+3.  GitHub OAuth authorization screen appears
+          ↓
+4.  Developer approves → GitHub sends one-time code to our server
+          ↓
+5.  Server exchanges code for access token via GitHub API
+          ↓
+6.  Passport fetches GitHub profile (username, email, avatar)
+          ↓
+7.  Server checks if User exists in MongoDB
+      → New user: creates User + Developer documents
+      → Existing user: returns existing documents
+          ↓
+8.  Server signs a JWT { id: userId } with HS256
+          ↓
+9.  JWT set as HttpOnly cookie (JS cannot read it → XSS safe)
+          ↓
+10. Browser redirected to /dashboard
+          ↓
+11. Dashboard loads → fetches /api/auth/me → renders profile
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                        SYNC FLOW                                │
+└─────────────────────────────────────────────────────────────────┘
+
+1.  Developer clicks "Sync GitHub" on Dashboard
+          ↓
+2.  Enters GitHub Personal Access Token (repo + read:user scopes)
+          ↓
+3.  POST /api/developers/sync → auth → rbac('developer') → syncLimiter
+          ↓
+4.  IngestionService.syncDeveloper() runs:
+      a. createGitHubClient(accessToken) — axios instance with Bearer token
+      b. Promise.all([fetchRepos, fetchPRs, fetchReviews, fetchIssues, fetchPushes])
+         — all GitHub API calls run in parallel, not sequentially
+      c. storeEvents() — insertMany with ordered:false
+         → unique index on githubEventId prevents duplicates
+         → error code 11000 (duplicate key) is caught and ignored
+      d. buildSkillObjects(repos) — maps language + topics → normalized skill tags
+      e. Developer.findByIdAndUpdate() — saves skills, sets lastSyncAt
+          ↓
+5.  ScoringEngine.computeScore() runs:
+      a. Fetches all ContribEvent docs for this developer
+      b. For each event: decayMultiplier = Math.exp(-0.005 × ageInDays)
+      c. points = event.weight × decayMultiplier
+      d. Sums all points → finalScore
+      e. ScoreSnapshot.create() — saves score + breakdown to history
+      f. Developer.findByIdAndUpdate({ score: finalScore }) — updates cache
+          ↓
+6.  Response: { score, breakdown, ingestion stats }
+          ↓
+7.  Dashboard updates score card, breakdown bars, events list
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      RECRUITER FLOW                             │
+└─────────────────────────────────────────────────────────────────┘
+
+1.  Developer logs in → goes to Settings → switches role to Recruiter
+          ↓
+2.  PATCH /api/auth/role { role: 'recruiter' } → updates User.role in MongoDB
+          ↓
+3.  Zustand store updates user.role → Navbar shows Search link
+          ↓
+4.  Recruiter goes to Search page
+          ↓
+5.  Fills filters: skills (comma-separated), minScore, availability
+          ↓
+6.  GET /api/search/developers?skills=react,nodejs&minScore=50
+      → auth → rbac('recruiter', 'admin') → searchDevelopers controller
+      → builds dynamic MongoDB query
+      → Developer.find(query).sort({ score: -1 }) using compound index
+          ↓
+7.  Results rendered as developer cards
+          ↓
+8.  Recruiter clicks "+ Save" → POST /api/search/saved
+      → User.$addToSet({ savedDevelopers: developerId })
+      → $addToSet prevents duplicates automatically
+          ↓
+9.  Saved tab shows shortlist
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                   REQUEST LIFECYCLE                             │
+│         POST /api/developers/sync (example)                     │
+└─────────────────────────────────────────────────────────────────┘
+
+Request arrives
+      ↓
+generalLimiter     → over 100 req/15min from this IP? → 429
+      ↓
+auditLogger        → hooks res.send to capture status code later
+      ↓
+syncLimiter        → over 5 syncs/hour from this IP? → 429
+      ↓
+auth               → reads JWT from HttpOnly cookie
+                   → jwt.verify(token, JWT_SECRET)
+                   → User.findById(decoded.id) — fetches fresh from DB
+                   → attaches req.user
+      ↓
+rbac('developer')  → req.user.role === 'developer'? → else 403
+      ↓
+controller         → IngestionService + ScoringEngine run
+      ↓
+res.json(result)   → response sent
+      ↓
+auditLogger        → AuditLog.create({ actor, method, route, ip, status })
+                   — written async, does not block response
+```
+
+---
+
+## Architecture
+
+### Backend — Service + Controller Separation
+
+```
+routes/         → defines endpoints + middleware chain
+controllers/    → handles req/res, calls services, returns JSON
+services/       → pure business logic, no Express dependency
+models/         → Mongoose schemas + indexes
+middleware/     → auth, rbac, rateLimiter, auditLogger
+config/         → db connection, passport OAuth strategy
+```
+
+**Why this separation matters:**
+Services have no knowledge of HTTP. `ScoringEngine.computeScore(devId)` takes a
+MongoDB ObjectId and returns a plain object. It could be called from a cron job,
+a test, or a CLI tool — not just a controller. This is what separates
+architecture from glued-together code.
+
+### Middleware Chain
+
+Every protected request passes through:
+```
+generalLimiter → auditLogger → [route-specific] → auth → rbac → controller
+```
+
+### Database Indexes
+
+Two critical indexes power the app:
+
+```js
+// Fast recruiter search — covers both filter and sort
+developerSchema.index({ 'skills.tag': 1, score: -1 })
+
+// Fast event queries per developer sorted by date
+contribEventSchema.index({ devId: 1, occurredAt: -1 })
+
+// Prevents duplicate GitHub events on re-sync
+contribEventSchema.index({ githubEventId: 1 }, { unique: true })
+
+// Auto-deletes audit logs after 90 days
+auditLogSchema.index({ ts: 1 }, { expireAfterSeconds: 7776000 })
+```
+
+### Security Decisions
+
+| Decision | Why |
+|----------|-----|
+| HttpOnly cookies for JWT | Browser JS cannot read the token → XSS protection |
+| `sameSite: 'lax'` on cookie | Prevents CSRF attacks |
+| Only `{ id }` in JWT payload | Role changes take effect immediately — no stale token data |
+| Fresh DB fetch on every auth check | Deleted/banned users can't use old tokens |
+| SHA-256 uniqueId on events | Idempotent sync — re-syncing never creates duplicates |
+| Rate limit on sync endpoint | Prevents GitHub API quota exhaustion |
+
+---
+
+## Tech Stack
+
+### Backend
+| Package | Purpose |
+|---------|---------|
+| Express | HTTP server + routing |
+| Mongoose | MongoDB ODM + schema validation |
+| Passport + passport-github2 | GitHub OAuth 2.0 strategy |
+| jsonwebtoken | JWT sign and verify |
+| cookie-parser | Read HttpOnly cookies |
+| express-rate-limit | Request throttling |
+| axios | GitHub REST API calls |
+| dotenv | Environment variable loading |
+| cors | Cross-origin request handling |
+| bcryptjs | Included but unused in MVP (for future password auth) |
+
+### Frontend
+| Package | Purpose |
+|---------|---------|
+| React 18 + Vite | UI framework + build tool |
+| React Router DOM | Client-side routing |
+| Zustand | Lightweight global state (auth, developer profile) |
+| Axios | API calls with cookie credentials |
+| Recharts | Score breakdown and activity charts |
+| react-hot-toast | Non-intrusive notifications |
+| Tailwind CSS v4 | Utility CSS via @tailwindcss/vite |
+
+---
+
+## MongoDB Collections
+
+```
+users           → login identity (githubId, username, role, savedDevelopers)
+developers      → public profile (skills, score, availability, lastSyncAt)
+contribevents   → one GitHub action (type, weight, repoName, occurredAt)
+scoresnapshots  → one computed score (score, breakdown, computedAt)
+auditlogs       → one request record (actor, method, route, ip, status)
+```
+
+---
+
+## API Reference
+
+```
+AUTH
+GET    /api/auth/github                   Redirect to GitHub OAuth
+GET    /api/auth/github/callback          OAuth callback — sets JWT cookie
+GET    /api/auth/me                       Current user + developer profile
+POST   /api/auth/logout                   Clear JWT cookie
+PATCH  /api/auth/role                     Switch role (developer ↔ recruiter)
+
+DEVELOPERS
+GET    /api/developers/profile/:username  Public profile (no auth)
+GET    /api/developers/me                 Own profile (developer)
+GET    /api/developers/me/events          Own events paginated (developer)
+PATCH  /api/developers/availability       Update open/busy/closed (developer)
+POST   /api/developers/sync              Sync GitHub + recompute score (developer)
+
+SCORES
+GET    /api/scores/:username             Current score (public)
+GET    /api/scores/:username/breakdown   Score breakdown by type (public)
+GET    /api/scores/:username/history     Score history snapshots (auth)
+POST   /api/scores/:username/recompute   Force recompute (admin)
+
+SEARCH
+GET    /api/search/leaderboard           Top developers by score (public)
+GET    /api/search/developers            Filter developers (recruiter)
+POST   /api/search/saved                 Save to shortlist (recruiter)
+GET    /api/search/saved                 Get shortlist (recruiter)
+DELETE /api/search/saved/:developerId    Remove from shortlist (recruiter)
+```
+
+---
+
+## Local Setup
+
+### Prerequisites
+- Node.js 18+
+- MongoDB Atlas account (free tier works)
+- GitHub OAuth App
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/yourusername/contribgraph.git
+cd contribgraph
+
+# root dependencies
+npm install
+
+# backend
+cd server && npm install && cd ..
+
+# frontend
+cd client && npm install && cd ..
+```
+
+### 2. Create GitHub OAuth App
+
+Go to [github.com/settings/developers](https://github.com/settings/developers)
+→ New OAuth App:
+
+```
+Application name:  ContribGraph
+Homepage URL:      http://localhost:5173
+Callback URL:      http://localhost:5000/api/auth/github/callback
+```
+
+Copy the Client ID and generate a Client Secret.
+
+### 3. Environment variables
+
+```bash
+cp server/.env.example server/.env
+```
+
+Fill in `server/.env`:
+
+```env
+PORT=5000
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/contribgraph
+JWT_SECRET=run_this_to_generate: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:5173
+GITHUB_CLIENT_ID=your_client_id
+GITHUB_CLIENT_SECRET=your_client_secret
+GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
+```
+
+### 4. Run
+
+```bash
+# from root — starts both client and server
+npm run dev
+
+# or separately
+npm run dev:server   # http://localhost:5000
+npm run dev:client   # http://localhost:5173
+```
+
+---
+
+## Deployment
+
+### Backend → Render
+
+1. New Web Service → connect GitHub repo
+2. Root directory: `server`
+3. Build command: `npm install`
+4. Start command: `npm start`
+5. Add all `.env` variables in Render dashboard
+6. Change `GITHUB_CALLBACK_URL` to your Render URL
+7. Change `CLIENT_URL` to your Vercel URL
+
+### Frontend → Vercel
+
+1. New Project → connect GitHub repo
+2. Root directory: `client`
+3. Add env variable: `VITE_API_URL=https://your-app.onrender.com/api`
+4. Deploy
+
+### Update GitHub OAuth App
+
+After deploying, update your GitHub OAuth App callback URL to:
+```
+https://your-app.onrender.com/api/auth/github/callback
+```
+
+---
+
+## What I Would Add Next
+
+- **GitHub access token storage** — currently users paste their PAT on every sync. The OAuth flow could store the token server-side (encrypted) and auto-sync on a schedule
+- **Streak tracking** — consecutive days with activity
+- **Email notifications** — weekly score digest
+- **Score comparison** — compare two developer profiles side by side
+- **Organization profiles** — team-level scores for companies
+- **Webhook integration** — sync automatically on push instead of manually
+
+---
+
+## Project Structure
+
+```
+contribgraph/
+├── client/                    React + Vite + Tailwind + Zustand
+│   └── src/
+│       ├── api/               axios instance + API functions
+│       ├── components/        Navbar, ScoreCard, ActivityChart, ProtectedRoute
+│       ├── hooks/             useAuth
+│       ├── pages/             Landing, Dashboard, Profile, Search, Leaderboard, Settings
+│       └── store/             authStore, developerStore
+│
+├── server/                    Express + MongoDB
+│   ├── config/                db.js, passport.js
+│   ├── controllers/           auth, developer, score, search
+│   ├── middleware/            auth, rbac, rateLimiter, auditLogger
+│   ├── models/                User, Developer, ContribEvent, ScoreSnapshot, AuditLog
+│   ├── routes/                auth, developer, score, search
+│   ├── services/              IngestionService, ScoringEngine, TagInferenceService
+│   └── index.js
+│
+├── .gitignore
+├── package.json               root — concurrently scripts
+└── README.md
+```
+
+---
+
+## Interview Talking Points
+
+**"Tell me about a complex system you built"**
+
+> ContribGraph has a scoring engine that processes GitHub events with
+> exponential time decay — the same mathematical model financial systems use
+> for recency weighting. Every event is weighted by type and multiplied by
+> e^(−λ × age), giving a score that always reflects current momentum.
+
+**"How did you handle security?"**
+
+> JWT stored in HttpOnly cookies so browser JavaScript can never read the
+> token. I fetch fresh user data from MongoDB on every authenticated request
+> rather than trusting the token payload — so deleted or role-changed users
+> are caught immediately. Rate limiting on the sync endpoint prevents GitHub
+> API quota exhaustion.
+
+**"What patterns did you use?"**
+
+> Service/Controller separation so business logic has no HTTP dependency.
+> Factory pattern for RBAC middleware — rbac('developer', 'recruiter') returns
+> a configured middleware function. Monkey-patching res.send in the audit
+> logger to capture response status codes without blocking the response.
+
+**"What would you do differently?"**
+
+> Store the GitHub OAuth access token encrypted server-side and auto-sync on
+> a schedule instead of asking users for a PAT. I'd also add a proper job
+> queue (Bull + Redis) to handle sync as a background task instead of
+> blocking the HTTP request.
+
+---
+
+*Built with the MERN stack — MongoDB, Express, React, Node.js*
+*by Bikram Bishwokarma*
