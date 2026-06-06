@@ -48,7 +48,7 @@ app.use(cors({
 }))
 
 // also add this — handles preflight OPTIONS requests
-app.options('*', cors({
+app.options('/{*path}', cors({
     origin: process.env.CLIENT_URL,
     credentials: true
 }))
