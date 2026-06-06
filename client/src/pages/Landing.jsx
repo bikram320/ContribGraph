@@ -152,7 +152,7 @@ const Landing = () => {
                         </p>
 
                         <div style={{ display: 'flex', gap: 12, flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap' }}>
-                            <a href="http://localhost:5000/api/auth/github" style={{
+                            <a href={GITHUB_AUTH_URL} style={{
                                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                                 padding: '13px 26px', borderRadius: 10,
                                 backgroundColor: 'var(--accent)', color: 'var(--bg-base)',

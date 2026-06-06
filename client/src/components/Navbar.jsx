@@ -413,7 +413,7 @@ const Navbar = () => {
                             )}
                         </div>
                     ) : (
-                        <a href="http://localhost:5000/api/auth/github" style={{
+                        <a href={GITHUB_AUTH_URL} style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 8,
