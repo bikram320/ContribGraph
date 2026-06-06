@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import useAuthStore from '../store/authStore.js'
 import { logout as logoutApi } from '../api/auth.api.js'
+import { GITHUB_AUTH_URL } from '../config/config.js'
 
 const Navbar = () => {
     const { user, isAuthenticated, logout } = useAuthStore()
@@ -607,7 +608,7 @@ const Navbar = () => {
 
                     {/* Sign in button for unauthenticated */}
                     {!isAuthenticated && (
-                        <a href="http://localhost:5000/api/auth/github" style={{
+                        <a href={ GITHUB_AUTH_URL }  style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

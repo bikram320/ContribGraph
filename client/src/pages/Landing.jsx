@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore.js'
+import {GITHUB_AUTH_URL} from "../config/config.js";
 
 const GitHubIcon = ({ size = 14 }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -339,7 +340,7 @@ const Landing = () => {
                             <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 480, margin: '0 auto 36px' }}>
                                 Filter by skills, score, and availability. Every profile is backed by verifiable GitHub activity — no inflated resumes.
                             </p>
-                            <a href="http://localhost:5000/api/auth/github" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '13px 28px', borderRadius: 10, backgroundColor: 'var(--accent)', color: 'var(--bg-base)', textDecoration: 'none', fontWeight: 600, fontSize: 14, transition: 'all 0.2s ease' }}
+                            <a href={ GITHUB_AUTH_URL }  style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '13px 28px', borderRadius: 10, backgroundColor: 'var(--accent)', color: 'var(--bg-base)', textDecoration: 'none', fontWeight: 600, fontSize: 14, transition: 'all 0.2s ease' }}
                                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(13,148,136,0.35)' }}
                                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
                             >Get Recruiter Access</a>
