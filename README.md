@@ -485,39 +485,5 @@ contribgraph/
 ```
 
 ---
-
-## Interview Talking Points
-
-**"Tell me about a complex system you built"**
-
-> ContribGraph has a scoring engine that processes GitHub events with
-> exponential time decay — the same mathematical model financial systems use
-> for recency weighting. Every event is weighted by type and multiplied by
-> e^(−λ × age), giving a score that always reflects current momentum.
-
-**"How did you handle security?"**
-
-> JWT stored in HttpOnly cookies so browser JavaScript can never read the
-> token. I fetch fresh user data from MongoDB on every authenticated request
-> rather than trusting the token payload — so deleted or role-changed users
-> are caught immediately. Rate limiting on the sync endpoint prevents GitHub
-> API quota exhaustion.
-
-**"What patterns did you use?"**
-
-> Service/Controller separation so business logic has no HTTP dependency.
-> Factory pattern for RBAC middleware — rbac('developer', 'recruiter') returns
-> a configured middleware function. Monkey-patching res.send in the audit
-> logger to capture response status codes without blocking the response.
-
-**"What would you do differently?"**
-
-> Store the GitHub OAuth access token encrypted server-side and auto-sync on
-> a schedule instead of asking users for a PAT. I'd also add a proper job
-> queue (Bull + Redis) to handle sync as a background task instead of
-> blocking the HTTP request.
-
----
-
 *Built with the MERN stack — MongoDB, Express, React, Node.js*
 *by Bikram Bishwokarma*

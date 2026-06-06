@@ -112,8 +112,8 @@ const Profile = () => {
     }
     const avail = availabilityMap[developer.availability]
 
-    const maxBreakdown = breakdown
-        ? Math.max(...Object.values(breakdown).filter(v => typeof v === 'number'), 1)
+    const maxBreakdown = breakdown?.breakdown
+        ? Math.max(...Object.values(breakdown.breakdown).filter(v => typeof v === 'number'), 1)
         : 1
 
     return (
