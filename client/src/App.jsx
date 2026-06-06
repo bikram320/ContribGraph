@@ -13,15 +13,10 @@ import useAuth from './hooks/useAuth.js'
 import useAuthStore from './store/authStore.js'
 
 const App = () => {
-    const { fetchMe } = useAuth()
     const { isAuthenticated } = useAuthStore()
 
-    useEffect(() => {
-        // on every app load — try to restore session from HttpOnly cookie
-        // if cookie exists and is valid → sets user in store
-        // if not → clears store, user stays on landing
-        fetchMe()
-    }, [])
+    const fetchMe = useAuthStore((state) => state.fetchMe)
+    useEffect(() => { fetchMe() }, [])
 
     return (
         <BrowserRouter>

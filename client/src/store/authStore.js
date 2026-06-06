@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { getMe } from '../api/auth.api.js'
 
 const useAuthStore = create(
     persist(
@@ -38,7 +39,29 @@ const useAuthStore = create(
                 developer: state.developer
                     ? { ...state.developer, score }
                     : null
-            }))
+            })),
+
+            // Call once on app boot to verify cookie and hydrate user state
+            fetchMe: async () => {
+                try {
+                    const res = await getMe()
+                    set({
+                        user: res.data.user,
+                        developer: res.data.developer,
+                        isAuthenticated: true,
+                        isLoading: false,
+                        hasHydrated: true
+                    })
+                } catch {
+                    set({
+                        user: null,
+                        developer: null,
+                        isAuthenticated: false,
+                        isLoading: false,
+                        hasHydrated: true
+                    })
+                }
+            }
         }),
         {
             name: 'contribgraph-auth',

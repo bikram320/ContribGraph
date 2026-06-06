@@ -3,15 +3,7 @@ import User from '../models/User.js'
 
 const auth = async (req, res, next) => {
     try {
-        // Try cookie first, then Authorization header
-        let token = req.cookies.token
-
-        if (!token) {
-            const authHeader = req.headers.authorization
-            if (authHeader?.startsWith('Bearer ')) {
-                token = authHeader.split(' ')[1]
-            }
-        }
+        const token = req.cookies.token
 
         if (!token) {
             return res.status(401).json({ message: 'Not authenticated. Please log in.' })
