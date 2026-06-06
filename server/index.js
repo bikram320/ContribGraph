@@ -41,8 +41,19 @@ const app = express()
 // =====================================================
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,   // https://contrib-graph.vercel.app
-    credentials: true,                // ← this must be true for cookies
+    origin: (origin, callback) => {
+        const allowed = [
+            'https://contrib-graph.vercel.app',
+            'http://localhost:5173',
+            'http://localhost:3000',
+        ]
+        if (!origin || allowed.includes(origin)) {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }))

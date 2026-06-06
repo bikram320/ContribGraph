@@ -2,22 +2,28 @@ import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 import Developer from '../models/Developer.js'
 
-// helper — generates JWT and sets it as HttpOnly cookie
+// Use this same config object everywhere
+const COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+}
+
 const sendTokenCookie = (res, user) => {
     const token = jwt.sign(
         { id: user._id },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN }
     )
-
-    res.cookie('token', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-
+    res.cookie('token', token, COOKIE_OPTIONS)
     return token
+}
+
+// In logout:
+export const logout = (req, res) => {
+    res.clearCookie('token', COOKIE_OPTIONS)  // same options!
+    res.status(200).json({ message: 'Logged out successfully.' })
 }
 
 // ─────────────────────────────────────────────
@@ -55,20 +61,6 @@ export const githubCallback = async (req, res) => {
         console.error('GitHub callback error:', error)
         res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`)
     }
-}
-
-// ─────────────────────────────────────────────
-// POST /api/auth/logout
-// clears the JWT cookie
-// ─────────────────────────────────────────────
-export const logout = (req, res) => {
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-    })
-
-    res.status(200).json({ message: 'Logged out successfully.' })
 }
 
 // ─────────────────────────────────────────────
