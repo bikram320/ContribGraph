@@ -35,7 +35,7 @@ const Dashboard = () => {
         const params = new URLSearchParams(window.location.search)
         const token = params.get('token')
         if (token) {
-            localStorage.setItem('contribgraph-auth', token)
+            localStorage.setItem('contribgraph-jwt', token)
             window.history.replaceState({}, '', '/dashboard')
         }
 
