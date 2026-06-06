@@ -36,11 +36,14 @@ connectDB()
 
 const app = express()
 
+// Trust Render's proxy — required for express-rate-limit to work correctly
+app.set('trust proxy', 1)
+
 // =====================================================
-// Core Middleware
+// CORS
 // =====================================================
 
-app.use(cors({
+const corsOptions = {
     origin: (origin, callback) => {
         const allowed = [
             'https://contrib-graph.vercel.app',
@@ -50,19 +53,20 @@ app.use(cors({
         if (!origin || allowed.includes(origin)) {
             callback(null, true)
         } else {
-            callback(new Error('Not allowed by CORS'))
+            callback(new Error(`CORS blocked: ${origin}`))
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-}))
+}
 
-// also add this — handles preflight OPTIONS requests
-app.options('/{*path}', cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true
-}))
+app.use(cors(corsOptions))
+app.options('/{*path}', cors(corsOptions)) // handle preflight with same config
+
+// =====================================================
+// Core Middleware
+// =====================================================
 
 app.use(express.json())
 app.use(cookieParser())
@@ -73,7 +77,7 @@ app.use(auditLogger)
 // API Routes
 // =====================================================
 
-// Auth routes use their own looser limiter — must be registered
+// Auth routes use their own looser limiter — registered
 // BEFORE generalLimiter so the general one doesn't fire first
 app.use('/api/auth', authLimiter, authRoutes)
 
@@ -88,10 +92,7 @@ app.use('/api/search', searchRoutes)
 // =====================================================
 
 app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        message: 'ContribGraph API running'
-    })
+    res.json({ status: 'ok', message: 'ContribGraph API running' })
 })
 
 // =====================================================
@@ -101,44 +102,26 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/test/sync', auth, rbac('developer'), async (req, res) => {
     try {
-        const developer = await Developer.findOne({
-            userId: req.user._id
-        })
+        const developer = await Developer.findOne({ userId: req.user._id })
 
         if (!developer) {
-            return res.status(404).json({
-                message: 'Developer profile not found'
-            })
+            return res.status(404).json({ message: 'Developer profile not found' })
         }
 
         const accessToken = process.env.GITHUB_TEST_TOKEN
 
         if (!accessToken) {
-            return res.status(500).json({
-                message: 'GITHUB_TEST_TOKEN not configured'
-            })
+            return res.status(500).json({ message: 'GITHUB_TEST_TOKEN not configured' })
         }
 
-        const ingestionResult = await IngestionService.syncDeveloper(
-            developer._id,
-            accessToken
-        )
+        const ingestionResult = await IngestionService.syncDeveloper(developer._id, accessToken)
+        const scoringResult = await ScoringEngine.computeScore(developer._id)
 
-        const scoringResult = await ScoringEngine.computeScore(
-            developer._id
-        )
+        res.json({ success: true, ingestion: ingestionResult, scoring: scoringResult })
 
-        res.json({
-            success: true,
-            ingestion: ingestionResult,
-            scoring: scoringResult
-        })
     } catch (error) {
         console.error('Test sync error:', error)
-
-        res.status(500).json({
-            message: error.message || 'Sync failed'
-        })
+        res.status(500).json({ message: error.message || 'Sync failed' })
     }
 })
 
@@ -148,10 +131,7 @@ app.post('/api/test/sync', auth, rbac('developer'), async (req, res) => {
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
-
-    res.status(err.status || 500).json({
-        message: err.message || 'Internal server error'
-    })
+    res.status(err.status || 500).json({ message: err.message || 'Internal server error' })
 })
 
 // =====================================================
@@ -161,5 +141,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`)
+    console.log(` Server running on port ${PORT}`)
 })
