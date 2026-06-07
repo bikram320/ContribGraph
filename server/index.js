@@ -19,6 +19,7 @@ import authRoutes from './routes/auth.routes.js'
 import developerRoutes from './routes/developer.routes.js'
 import scoreRoutes from './routes/score.routes.js'
 import searchRoutes from './routes/search.routes.js'
+import healthRoutes from "./routes/health.routes.js";
 
 // Services
 import IngestionService from './services/IngestionService.js'
@@ -90,8 +91,6 @@ app.use('/api/search', searchRoutes)
 // =====================================================
 // Health Check
 // =====================================================
-
-import healthRoutes from "./routes/health.routes.js";
 app.use("/health", healthRoutes);
 // =====================================================
 // TEMP TEST SYNC ROUTE

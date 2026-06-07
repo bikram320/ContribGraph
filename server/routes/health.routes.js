@@ -1,13 +1,10 @@
-const express = require("express");
-const router = express.Router();
-const { basicHealth, detailedHealth, ping } = require("../controllers/health.controller");
+import express from "express";
+import { basicHealth, detailedHealth, ping } from "../controllers/health.controller.js";
 
-// GET /health         → quick status check
-// GET /health/detailed → full system info
-// GET /health/ping    → simple ping/pong
+const router = express.Router();
 
 router.get("/", basicHealth);
 router.get("/detailed", detailedHealth);
 router.get("/ping", ping);
 
-module.exports = router;
+export default router;
