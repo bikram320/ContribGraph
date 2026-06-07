@@ -91,8 +91,7 @@ app.use('/api/search', searchRoutes)
 // Health Check
 // =====================================================
 
-const healthRoutes = require("./routes/health.routes"); // adjust path as needed
-
+import healthRoutes from "./routes/health.routes.js";
 app.use("/health", healthRoutes);
 // =====================================================
 // TEMP TEST SYNC ROUTE
