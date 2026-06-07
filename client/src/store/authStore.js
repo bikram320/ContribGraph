@@ -8,8 +8,8 @@ const useAuthStore = create(
             user: null,
             developer: null,
             isAuthenticated: false,
-            isLoading: true,       // ← start true: ProtectedRoute waits until fetchMe settles
-            hasHydrated: false,    // ← flips once on app boot, prevents fetchMe running twice
+            isLoading: true,
+            hasHydrated: false,
 
             setUser: (user, developer) => set({
                 user,
@@ -41,8 +41,9 @@ const useAuthStore = create(
                     : null
             })),
 
-            // Call once on app boot to verify cookie and hydrate user state
+            // ← THE FIX: isLoading: true at the START, not just at the end
             fetchMe: async () => {
+                set({ isLoading: true })   // ← this line was missing
                 try {
                     const res = await getMe()
                     set({
@@ -65,8 +66,6 @@ const useAuthStore = create(
         }),
         {
             name: 'contribgraph-auth',
-            // isLoading and hasHydrated are never persisted —
-            // they must always reset to their initial values on page load
             partialize: (state) => ({
                 user: state.user,
                 developer: state.developer,
