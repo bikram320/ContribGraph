@@ -9,13 +9,12 @@ import Profile from './pages/Profile.jsx'
 import Search from './pages/Search.jsx'
 import Leaderboard from './pages/Leaderboard.jsx'
 import Settings from './pages/Settings.jsx'
-import useAuth from './hooks/useAuth.js'
 import useAuthStore from './store/authStore.js'
 
 const App = () => {
-    const { isAuthenticated } = useAuthStore()
-
+    const { isAuthenticated, isLoading } = useAuthStore()
     const fetchMe = useAuthStore((state) => state.fetchMe)
+
     useEffect(() => { fetchMe() }, [])
 
     return (
@@ -36,20 +35,18 @@ const App = () => {
             <Navbar />
             <Routes>
 
-                {/* ── Public routes — no auth needed ───────────────── */}
                 <Route
                     path="/"
                     element={
-                        // if already logged in, skip landing → go straight to dashboard
-                        isAuthenticated
-                            ? <Navigate to="/dashboard" replace />
-                            : <Landing />
+                        // ← FIX: don't redirect while still loading — wait for fetchMe
+                        isLoading
+                            ? null
+                            : isAuthenticated
+                                ? <Navigate to="/dashboard" replace />
+                                : <Landing />
                     }
                 />
 
-                {/* OAuth callback landing point
-            GitHub redirects to /dashboard after callback
-            fetchMe() in useEffect picks up the cookie automatically */}
                 <Route
                     path="/dashboard"
                     element={
@@ -62,7 +59,6 @@ const App = () => {
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
 
-                {/* ── Protected routes ──────────────────────────────── */}
                 <Route
                     path="/settings"
                     element={
@@ -81,11 +77,7 @@ const App = () => {
                     }
                 />
 
-                {/* ── Catch all — no login page, just back to home ─── */}
-                <Route
-                    path="*"
-                    element={<Navigate to="/" replace />}
-                />
+                <Route path="*" element={<Navigate to="/" replace />} />
 
             </Routes>
         </BrowserRouter>

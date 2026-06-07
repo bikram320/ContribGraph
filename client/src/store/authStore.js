@@ -18,9 +18,7 @@ const useAuthStore = create(
             }),
 
             setDeveloper: (developer) => set({ developer }),
-
             setLoading: (isLoading) => set({ isLoading }),
-
             setHydrated: () => set({ hasHydrated: true }),
 
             logout: () => set({
@@ -41,9 +39,8 @@ const useAuthStore = create(
                     : null
             })),
 
-            // ← THE FIX: isLoading: true at the START, not just at the end
             fetchMe: async () => {
-                set({ isLoading: true })   // ← this line was missing
+                set({ isLoading: true })  // ← THE FIX: always block renders until resolved
                 try {
                     const res = await getMe()
                     set({
@@ -70,7 +67,13 @@ const useAuthStore = create(
                 user: state.user,
                 developer: state.developer,
                 isAuthenticated: state.isAuthenticated
-            })
+            }),
+            // ← THE SECOND FIX: force isLoading true while persist is rehydrating
+            onRehydrateStorage: () => (state) => {
+                if (state) {
+                    state.isLoading = true
+                }
+            }
         }
     )
 )
