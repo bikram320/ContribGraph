@@ -91,10 +91,9 @@ app.use('/api/search', searchRoutes)
 // Health Check
 // =====================================================
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'ContribGraph API running' })
-})
+const healthRoutes = require("./routes/health.routes"); // adjust path as needed
 
+app.use("/health", healthRoutes);
 // =====================================================
 // TEMP TEST SYNC ROUTE
 // Remove after OAuth token storage is implemented
